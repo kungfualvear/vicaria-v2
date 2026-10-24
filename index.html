@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ViCaRiA - Vigía de Caudales del Río Atuel</title>
+  <link rel="stylesheet" href="vicaria.css">
+  <meta name="theme-color" content="#000000">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+</head>
+<body>
+  <div class="header">
+    <h1></h1>
+  </div>
+
+  <aside class="side-panel" id="sidePanel" aria-label="Menú">
+    <button class="panel-tab" id="panelToggle" type="button"
+            title="Mostrar/ocultar menú" aria-controls="sidePanel" aria-expanded="true">▶</button>
+
+    <div class="filter-group">
+      <button class="filter-btn" data-filter="all" title="Todos">📊</button>
+      <button class="filter-btn active" data-filter="favorites" title="Favoritos">⭐</button>
+      <button class="filter-btn" data-filter="alarm" title="Alarmas">🔔</button>
+      <button class="filter-btn" id="manageBtn" title="Gestionar Códigos">⚙️</button>
+      <button class="filter-btn success" id="refreshBtn" title="Actualizar">⟳</button>
+    </div>
+  </aside>
+
+  <div id="cardsGrid" class="cards-grid"></div>
+
+  <div class="loading" id="initialLoading">
+    Cargando códigos disponibles...
+  </div>
+
+  <div class="empty-state" id="emptyState" style="display: none;">
+    <h2>📭 No hay códigos seleccionados</h2>
+    <p>Haz clic en "Gestionar Códigos" para agregar tarjetas de monitoreo</p>
+    <button class="btn" onclick="document.getElementById('manageBtn').click()">
+      ➕ Agregar Códigos
+    </button>
+  </div>
+
+  <div class="modal" id="selectorModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Gestionar Códigos</h2>
+        <button class="close-btn" id="closeModal">✕</button>
+      </div>
+      
+      <div class="modal-body">
+        <input type="text" id="modalSearch" class="modal-search" placeholder="🔍 Buscar código o nombre...">
+        <div class="code-list" id="codeList"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn" style="flex: 1;" id="saveSelection">💾 Guardar Selección</button>
+      </div>
+    </div>
+  </div>
+  
+<div class="modal" id="historyModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="historyModalTitle">Historial de Datos</h2>
+		
+        <div style="display: flex; gap: 15px; align-items: center;">
+            
+            <button class="close-btn" id="closeHistoryModal">✕</button>
+        </div>
+      </div>
+      
+      <div class="modal-body">
+        <div class="time-filter">
+            <label>Mostrar últimas:</label>
+            <select id="timeRangeSelect">
+			    <option value="2">2 Horas</option>
+                <option value="4" selected>4 Horas</option>
+                <option value="8">8 Horas</option>
+                <option value="12">12 Horas</option>
+                <option value="24">24 Horas</option>
+				<option value="48">48 Horas</option>
+            </select>
+            <button class="btn" id="updateChartBtn">Actualizar Gráfico</button>
+			<button class="btn" 
+                style="background: #4CAF50; margin-left: auto; margin-right: 10px; font-size: 0.9rem; padding: 8px 15px;" 
+                onclick="downloadHistoryCSV(currentHistoryCode)">⬇️ Descargar CSV</button>
+        </div>
+        <div class="chart-container">
+            <canvas id="historyChart"></canvas>
+            <div id="chartLoading" class="loading" style="display:none; color:#333;">Cargando gráfico...</div>
+        </div>
+        <div id="historyTableContainer" class="history-table-container">
+            </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn" id="closeHistoryModalFooter" style="flex: 1;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal" id="settingsModal">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h2>Configuración</h2>
+              <button class="close-btn" id="closeSettingsModal">✕</button>
+          </div>
+          <div class="modal-body">
+              <div class="setting-item"> 
+                 
+                  <input type="checkbox" id="useAdjustValue">
+              </div>
+              <div class="setting-item"> 
+                  <label for="globalAdjustValue">Global (m³/s):</label> 
+                  <input type="number" step="0.01" id="globalAdjustValue" placeholder="Ej: 0.50">
+              </div>
+          </div>
+          <div class="modal-footer">
+              <button class="btn" id="closeSettingsModalFooter" style="flex: 1;">Cerrar</button>
+          </div>
+      </div>
+  </div>
+  <script src="vicaria-sheet.js"></script>
+  <script src="vicaria.js"></script>
+  
+  <script>
+  /*
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(() => console.log('SW registered'))
+      .catch(e => console.error('SW reg fail', e));
+  }
+  */
+</script>
+
+<div id="modalManual" class="modal-bg">
+  <div class="modal-content">
+    <button id="closeManual" class="close-btn">✖</button>
+    <iframe src="manual.html" class="manual-frame"></iframe>
+  </div>
+</div>
+
+  
+</body>
+</html>

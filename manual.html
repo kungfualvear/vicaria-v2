@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Manual de Usuario — ViCaRiA</title>
+  <style>
+    :root{--bg:#0b0b0b;--card:#0f1720;--muted:#9aa4b2;--accent:#667eea;--white:#fff}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Arial; background:linear-gradient(180deg,#000 0%, #071021 100%);color:var(--white)}
+    .container{max-width:980px;margin:28px auto;padding:20px}
+    header{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+    header h1{font-size:20px;margin:0}
+    .meta{color:var(--muted);font-size:13px}
+
+    nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+    nav a{background:rgba(255,255,255,0.04);padding:10px 12px;border-radius:8px;color:var(--white);text-decoration:none;font-size:14px}
+    nav a:hover{background:rgba(255,255,255,0.06)}
+
+    .card{background:rgba(255,255,255,0.03);padding:20px;border-radius:12px;margin-bottom:14px;box-shadow:0 6px 18px rgba(0,0,0,0.6)}
+    h2{margin:0 0 10px 0;color:var(--accent)}
+    p{color:var(--muted);line-height:1.5}
+    ul{color:var(--muted);margin:8px 0 12px 20px}
+    code{background:rgba(255,255,255,0.03);padding:2px 6px;border-radius:6px;font-size:13px}
+
+    .kbd{display:inline-block;background:#0c1726;border:1px solid rgba(255,255,255,0.04);padding:4px 8px;border-radius:6px;font-size:13px;color:var(--white)}
+
+    footer{margin-top:20px;color:var(--muted);font-size:13px}
+
+    /* responsive */
+    @media (max-width:700px){.container{padding:12px;margin:12px}header h1{font-size:18px}}
+
+    /* print */
+    @media print{body{background:white;color:#000} .card{box-shadow:none;background:#fff} nav, footer{display:none}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Guía rápida para usuarios</h1>
+        
+      </div>
+      
+    </header>
+
+    <nav>
+      <a href="#introduccion">Introducción</a>
+      <a href="#instalar">Instalar / Abrir</a>
+      <a href="#uso">Uso diario</a>
+      <a href="#tarjetas">Tarjetas y configuración</a>
+      <a href="#alarmas">Alarmas</a>
+      <a href="#faq">FAQ</a>
+      <a href="#troubleshoot">Resolución de problemas</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+
+    <section id="introduccion" class="card">
+      <h2>Introducción</h2>
+      <p>ViCaRiA es una aplicación de monitoreo de caudales diseñada para mostrar en tiempo real lecturas de sensores, proporcionar alertas configurables y ofrecer un tablero con tarjetas por cada punto de medición.</p>
+      <p>Este manual explica cómo instalar ViCaRiA, usar el tablero, configurar alarmas y resolver problemas frecuentes.</p>
+    </section>
+
+    <section id="instalar" class="card">
+      <h2>Instalar / Abrir</h2>
+      <p><strong>Desde móvil (Android):</strong> Abrir la web en Chrome → menú ⋮ → "Agregar a pantalla principal" o cuando aparezca la opción "Instalar". En dispositivos compatibles la app se abre en ventana independiente.</p>
+      <p><strong>Desde desktop (Chrome/Edge):</strong> Abrir la web, comprobar que el icono de instalar aparece en la barra de direcciones o en el menú (⋮) → "Instalar ViCaRiA". Si no aparece: <em>ver sección de resolución de problemas</em>.</p>
+      <p><strong>Abrir sin instalar:</strong> Acceder a la URL www.vicaria.netlify.app.</p>
+    </section>
+
+    <section id="uso" class="card">
+      <h2>Uso diario</h2>
+      <p>Al ingresar verás el tablero principal con tarjetas. Cada tarjeta representa un punto de medición. En la barra superior encontrarás:</p>
+      <ul>
+        <li><strong>Búsqueda</strong>: filtra tarjetas visibles por código o nombre.</li>
+        <li><strong>Filtros</strong>: ver todas / favoritos / solo alarmas.</li>
+        <li><strong>Gestionar Códigos</strong>: abre un modal para seleccionar qué tarjetas mostrar.</li>
+        <li><strong>Actualizar</strong>: fuerza una consulta al servidor para refrescar datos.</li>
+      </ul>
+
+      <p><strong>Lectura de una tarjeta:</strong></p>
+      <ul>
+        <li><strong>Nombre / código:</strong> título de la tarjeta.</li>
+        <li><strong>Valor principal:</strong> caudal o altura según configuración.</li>
+        <li><strong>Información secundaria:</strong> valor secundario, caudal asignado y variación.</li>
+        <li><strong>Última actualización:</strong> fecha y hora de la última medición; si aparece ⚠️ el dato está desactualizado.</li>
+      </ul>
+    </section>
+
+    <section id="tarjetas" class="card">
+      <h2>Tarjetas y configuración</h2>
+      <p>Haz clic en la tarjeta para expandir la configuración. Opciones principales:</p>
+      <ul>
+        <li><strong>Nombre personalizado</strong>: cambio permanente para mostrar en el tablero.</li>
+        <li><strong>Favorito</strong>: marca la tarjeta para filtros rápidos.</li>
+        <li><strong>Parámetro principal</strong>: elegir entre usar caudal (l/s) o altura (cm).</li>
+        <li><strong>Caudal / Altura asignado</strong>: valor de referencia usado para calcular la variación.</li>
+        <li><strong>Umbrales</strong>: valores arriba/abajo para disparar alarmas.</li>
+        <li><strong>Alarmas</strong>: activar/desactivar notificaciones y sonido.</li>
+        <li><strong>Ciclos de alarma</strong>: número de ciclos necesarios antes de iniciar la alarma.</li>
+        <li><strong>Orden de visualización</strong>: cambiar posición de la tarjeta en el tablero.</li>
+      </ul>
+
+      <p>Los cambios se guardan localmente en el navegador (localStorage). Si usas otro dispositivo o borrás datos, los ajustes no se sincronizan a menos que el administrador lo implemente.</p>
+    </section>
+
+    <section id="alarmas" class="card">
+      <h2>Alarmas</h2>
+      <p>ViCaRiA puede emitir:</p>
+      <ul>
+        <li>Notificación del navegador (si el usuario autorizó permisos).</li>
+        <li>Tono sonoro repetido (si el dispositivo y navegador lo permiten).</li>
+      </ul>
+
+      <p>Reglas básicas:</p>
+      <ul>
+        <li>Si la variación supera el <strong>umbral superior</strong> durante los ciclos configurados, se dispara alarma de aumento.</li>
+        <li>Si la variación supera el <strong>umbral inferior</strong> (merma) durante los ciclos, se dispara alarma de merma.</li>
+      </ul>
+
+      <p>Cómo silenciar una alarma:</p>
+      <ul>
+        <li>Dentro de la tarjeta expandida, presioná <em>Silenciar Alarma</em> (si está activo).</li>
+        <li>Desactivar la casilla de alarma en la configuración de la tarjeta.</li>
+      </ul>
+
+      <p>Nota: en iOS las notificaciones web están limitadas; la alarma sonora puede no funcionar correctamente en todos los navegadores móviles.</p>
+    </section>
+
+    <section id="faq" class="card">
+      <h2>Preguntas frecuentes (FAQ)</h2>
+      <h3>¿Por qué veo datos antiguos?</h3>
+      <p>Si aparece el icono ⚠️ en "Última actualización" significa que la medición tiene al menos 30 minutos de antigüedad. </p>
+
+      <h3>¿Se sincronizan las preferencias entre dispositivos?</h3>
+      <p>No. Las preferencias se guardan en <code>el almacenamiento</code> del navegador.</p>
+
+      <h3>¿Cómo agrego o elimino tarjetas?</h3>
+      <p>Ir a "Gestionar Códigos" → buscar el código → marcar o desmarcar la casilla → "Guardar Selección".</p>
+    </section>
+
+    
+    <section id="contacto" class="card">
+      <h2>Contacto y soporte</h2>
+      
+      <p><code>Danilo González / kungfualvear@gmail.com</code> </p>
+    </section>
+
+    <footer>
+      Este manual está pensado para usuarios comunes. 
+    </footer>
+  </div>
+</body>
+</html>
