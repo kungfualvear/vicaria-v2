@@ -14,6 +14,7 @@
 //
 //   hasSheetHistory(code)          -> true si el código tiene columnas en la hoja
 //   fetchSheetHistory(hours)       -> Promise<{ [code]: [{timestamp, caudal, altura}] }>
+//   fetchSheetHistoryRange(ini,fin)-> igual, para un rango de fechas (ms epoch)
 //
 // ------------------------------------------------------------
 
@@ -150,7 +151,7 @@ function sheetTimestamp(v) {
  * Se usa un fetch simple (sin cabeceras personalizadas) para evitar
  * preflight CORS, que los Apps Script no soportan.
  */
-async function sheetRequest(hours) {
+async function sheetRequest(params) {
 
   const controller = new AbortController();
 
@@ -161,9 +162,11 @@ async function sheetRequest(hours) {
 
   try {
 
-    const url =
-      `${SHEET_SCRIPT_URL}?horas=${encodeURIComponent(hours)}` +
-      `&_=${Date.now()}`;
+    const query = Object.entries(params || {})
+      .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+      .join('&');
+
+    const url = `${SHEET_SCRIPT_URL}?${query}&_=${Date.now()}`;
 
     const res = await fetch(
       url,
@@ -182,6 +185,10 @@ async function sheetRequest(hours) {
       throw new Error(
         'el Apps Script no devolvió JSON (revisá que la implementación sea "Cualquier usuario")'
       );
+    }
+
+    if (json && json.error) {
+      throw new Error(`Apps Script: ${json.error}`);
     }
 
     if (
@@ -221,7 +228,37 @@ async function fetchSheetHistory(hours) {
 
   const since = Date.now() - hours * 60 * 60 * 1000;
 
-  const { encabezados, filas } = await sheetRequest(hours);
+  const json = await sheetRequest({ horas: hours });
+
+  return sheetBuildHistory(json, since, Infinity);
+}
+
+
+/**
+ * Igual que fetchSheetHistory pero para un rango de fechas.
+ * startMs / endMs: milisegundos epoch (hora local del navegador ya resuelta).
+ */
+async function fetchSheetHistoryRange(startMs, endMs) {
+
+  const json = await sheetRequest({
+    desde: new Date(startMs).toISOString(),
+    hasta: new Date(endMs).toISOString()
+  });
+
+  // Un Apps Script viejo ignora desde/hasta y devolvería las últimas 3 h.
+  if (!json.rango) {
+    throw new Error(
+      'el Apps Script instalado no soporta rangos de fechas: pegá la versión nueva y publicá una nueva versión de la implementación'
+    );
+  }
+
+  return sheetBuildHistory(json, startMs, endMs);
+}
+
+
+function sheetBuildHistory(json, since, until) {
+
+  const { encabezados, filas } = json;
 
   // Índices de columnas por código
   const indexes = {};
@@ -265,7 +302,7 @@ async function fetchSheetHistory(hours) {
 
       const timestamp = sheetTimestamp(row[0]);
 
-      if (timestamp === null || timestamp < since) {
+      if (timestamp === null || timestamp < since || timestamp > until) {
         return;
       }
 
