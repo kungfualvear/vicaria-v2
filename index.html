@@ -85,6 +85,14 @@
                 style="background: #4CAF50; margin-left: auto; margin-right: 10px; font-size: 0.9rem; padding: 8px 15px;" 
                 onclick="downloadHistoryCSV(currentHistoryCode)">⬇️ Descargar CSV</button>
         </div>
+        <div class="time-filter range-filter">
+            <label for="rangeStart">Desde:</label>
+            <input type="datetime-local" id="rangeStart">
+            <label for="rangeEnd">Hasta:</label>
+            <input type="datetime-local" id="rangeEnd">
+            <button class="btn" id="applyRangeBtn">Ver rango</button>
+            <span id="rangeMessage" class="range-message"></span>
+        </div>
         <div class="chart-container">
             <canvas id="historyChart"></canvas>
             <div id="chartLoading" class="loading" style="display:none; color:#333;">Cargando gráfico...</div>
