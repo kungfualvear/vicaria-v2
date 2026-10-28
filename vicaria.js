@@ -49,6 +49,10 @@ const historyModalTitle = document.getElementById('historyModalTitle');
 const historyChartCanvas = document.getElementById('historyChart');
 const timeRangeSelect = document.getElementById('timeRangeSelect');
 const updateChartBtn = document.getElementById('updateChartBtn');
+const rangeStartInput = document.getElementById('rangeStart');
+const rangeEndInput = document.getElementById('rangeEnd');
+const applyRangeBtn = document.getElementById('applyRangeBtn');
+const rangeMessage = document.getElementById('rangeMessage');
 const historyTableContainer = document.getElementById('historyTableContainer');
 const chartLoading = document.getElementById('chartLoading');
 
@@ -506,8 +510,6 @@ function getCodeSettings(code) {
     '8092': 'Christophersen',
 
     '8098': 'Reservorio'
-    '8016': 'Babacci',
-    '8062': 'Perrone',
   };
 
   const defaults = {
@@ -4583,6 +4585,8 @@ function(
   timeRangeSelect.value =
     '4';
 
+  resetCustomRange();
+
 
   renderHistoryChart(
     code
@@ -4597,6 +4601,111 @@ function(
 // Evita que una respuesta lenta pise a una más reciente
 // (por ejemplo, al cambiar el rango de horas rápidamente).
 let historyRequestId = 0;
+
+
+// Rango de fechas personalizado del historial (null = se usa el selector de horas).
+let customHistoryRange = null;
+
+const MAX_CUSTOM_RANGE_DAYS = 31;
+
+function toLocalInputValue(ms) {
+
+  const d = new Date(ms);
+
+  const p = n => String(n).padStart(2, '0');
+
+  return (
+    `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}` +
+    `T${p(d.getHours())}:${p(d.getMinutes())}`
+  );
+}
+
+function setRangeMessage(text) {
+
+  if (rangeMessage) {
+    rangeMessage.textContent = text || '';
+  }
+}
+
+function resetCustomRange() {
+
+  customHistoryRange = null;
+
+  if (rangeStartInput) rangeStartInput.value = '';
+  if (rangeEndInput) rangeEndInput.value = '';
+
+  setRangeMessage('');
+}
+
+// Texto para el nombre del CSV: "4h" o "20261001-0800_a_20261003-2000".
+function historyRangeTag() {
+
+  if (customHistoryRange) {
+
+    const f = ms =>
+      toLocalInputValue(ms).replace(/[-:]/g, '').replace('T', '-');
+
+    return `${f(customHistoryRange.start)}_a_${f(customHistoryRange.end)}`;
+  }
+
+  return `${timeRangeSelect.value}h`;
+}
+
+// Etiquetas del eje X: con fecha cuando el rango es largo.
+function historyLabelOptions() {
+
+  const withDate =
+    !!customHistoryRange ||
+    parseInt(timeRangeSelect.value) >= 24;
+
+  return withDate
+    ? { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }
+    : { hour: '2-digit', minute: '2-digit', day: '2-digit' };
+}
+
+function applyCustomRange() {
+
+  if (!currentHistoryCode) {
+    return;
+  }
+
+  if (!rangeStartInput.value) {
+    setRangeMessage('Elegí la fecha y hora de inicio.');
+    return;
+  }
+
+  const startMs = new Date(rangeStartInput.value).getTime();
+
+  // Sin fecha final: hasta ahora. Con fecha final: incluye ese minuto completo.
+  const endMs = rangeEndInput.value
+    ? new Date(rangeEndInput.value).getTime() + 59999
+    : Date.now();
+
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) {
+    setRangeMessage('Fechas inválidas.');
+    return;
+  }
+
+  if (endMs <= startMs) {
+    setRangeMessage('La fecha final debe ser posterior a la inicial.');
+    return;
+  }
+
+  if (endMs - startMs > MAX_CUSTOM_RANGE_DAYS * 24 * 60 * 60 * 1000) {
+    setRangeMessage(`El rango máximo es de ${MAX_CUSTOM_RANGE_DAYS} días.`);
+    return;
+  }
+
+  if (!rangeEndInput.value) {
+    rangeEndInput.value = toLocalInputValue(endMs);
+  }
+
+  customHistoryRange = { start: startMs, end: endMs };
+
+  setRangeMessage('');
+
+  renderHistoryChart(currentHistoryCode);
+}
 
 
 window.renderHistoryChart =
@@ -4635,8 +4744,13 @@ async function(
   try {
 
     const sheetData =
-      await fetchSheetHistory(
-        rangeHours
+      (
+        customHistoryRange
+          ? await fetchSheetHistoryRange(
+              customHistoryRange.start,
+              customHistoryRange.end
+            )
+          : await fetchSheetHistory(rangeHours)
       );
 
 
@@ -4718,19 +4832,7 @@ async function(
       item =>
         new Date(
           item.timestamp
-        ).toLocaleTimeString(
-          'es-AR',
-          {
-            hour:
-              '2-digit',
-
-            minute:
-              '2-digit',
-
-            day:
-              '2-digit'
-          }
-        )
+        ).toLocaleTimeString('es-AR', historyLabelOptions())
     );
 
 
@@ -5420,7 +5522,7 @@ function(
 
 
   const fileName =
-    `historial_${code}_${timeRangeSelect.value}h_${new Date()
+    `historial_${code}_${historyRangeTag()}_${new Date()
       .toISOString()
       .slice(0, 10)}.csv`;
 
@@ -5506,10 +5608,13 @@ if (
 
   timeRangeSelect.addEventListener(
     'change',
-    () =>
-      renderHistoryChart(
-        currentHistoryCode
-      )
+    () => {
+
+      // Elegir horas descarta el rango de fechas personalizado.
+      resetCustomRange();
+
+      renderHistoryChart(currentHistoryCode);
+    }
   );
 }
 
@@ -5527,6 +5632,10 @@ if (
   );
 }
 
+
+if (applyRangeBtn) {
+  applyRangeBtn.addEventListener('click', applyCustomRange);
+}
 
 // ============================================================
 // MAXIMIZAR HISTORIAL
