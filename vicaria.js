@@ -506,6 +506,8 @@ function getCodeSettings(code) {
     '8092': 'Christophersen',
 
     '8098': 'Reservorio'
+    '8016': 'Babacci',
+    '8062': 'Perrone',
   };
 
   const defaults = {
