@@ -45,7 +45,25 @@ const SHEET_SOURCES = {
   '8005': 'Real del Padre (Matriz)',
   '8006': 'Real del Padre (Bifanni)',
   '8000': '8000',
-  '8021': 'La olla'
+  '8021': 'La olla',
+
+  '8068': 'Nihuil IV',
+  '8008': 'Arroyo',
+  '8018': 'Correa',
+  '8017': 'Regueira',
+  '8016': '8016',
+  '8062': '8062',
+  '8032': 'Bosch 14 y A',
+  '8057': 'Marz. Pueblo',
+  '8058': 'Marz. Cementerio',
+  '8059': 'Moss',
+  '8059-1': 'Christophersen S1',
+  '8060': 'C. Auxiliar',
+  '8061': 'R. Norte',
+  '8064': '4° Tramo',
+  '8086': '7 y A',
+  '8092': 'Christophersen',
+  '8098': 'Reservorio'
 };
 
 
@@ -264,6 +282,13 @@ async function fetchSheetHistory(hours) {
                 : sheetNumber(row[caudalIdx]),
 
             altura:
+              alturaIdx === -1
+                ? null
+                : sheetNumber(row[alturaIdx]),
+
+            // vicaria.js usa alturaAN1 para el código 8098 (la hoja ya
+            // guarda ahí la Altura AN1 de esa estación).
+            alturaAN1:
               alturaIdx === -1
                 ? null
                 : sheetNumber(row[alturaIdx])
