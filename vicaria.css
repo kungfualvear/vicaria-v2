@@ -1236,3 +1236,24 @@ input:checked + .slider:before {
 }
 
 
+
+
+/* ----- Rango de fechas del historial ----- */
+.time-filter { flex-wrap: wrap; }
+
+.time-filter input[type="datetime-local"] {
+  padding: 8px 10px;
+  font-size: 14px;
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--disco-blue);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  font-family: 'Rajdhani', sans-serif;
+  border-radius: 6px;
+  color-scheme: dark;
+}
+
+.range-message {
+  color: #ffb74d;
+  font-size: 13px;
+  font-family: 'Rajdhani', sans-serif;
+}
