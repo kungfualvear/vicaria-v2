@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ViCaRiA - Vigía de Caudales del Río Atuel</title>
   <link rel="stylesheet" href="vicaria.css">
   <meta name="theme-color" content="#000000">
@@ -11,6 +11,15 @@
 <body>
   <div class="header">
     <h1></h1>
+    <div class="topbar-m">
+      <div>
+        <div class="brand-m">ViCaRiA <span>· Atuel</span></div>
+        <div class="upd-m" id="lastUpdated">Cargando…</div>
+      </div>
+      <button type="button" class="ib-m" id="refreshBtnTop" aria-label="Actualizar datos">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+      </button>
+    </div>
   </div>
 
   <aside class="side-panel" id="sidePanel" aria-label="Menú">
@@ -18,10 +27,10 @@
             title="Mostrar/ocultar menú" aria-controls="sidePanel" aria-expanded="true">▶</button>
 
     <div class="filter-group">
-      <button class="filter-btn" data-filter="all" title="Todos">📊</button>
-      <button class="filter-btn active" data-filter="favorites" title="Favoritos">⭐</button>
-      <button class="filter-btn" data-filter="alarm" title="Alarmas">🔔</button>
-      <button class="filter-btn" id="manageBtn" title="Gestionar Códigos">⚙️</button>
+      <button class="filter-btn" data-filter="all" title="Todos"><span class="fi-d">📊</span><svg class="fi-m" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="fl">Todos</span></button>
+      <button class="filter-btn active" data-filter="favorites" title="Favoritos"><span class="fi-d">⭐</span><svg class="fi-m" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.2 9.4l6.1-.8z"/></svg><span class="fl">Favoritos</span></button>
+      <button class="filter-btn" data-filter="alarm" title="Alarmas"><span class="fi-d">🔔</span><svg class="fi-m" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17V11a6 6 0 1 1 12 0v6l2 2H4z"/><path d="M10 21h4"/></svg><span class="fl">Alarmas</span></button>
+      <button class="filter-btn" id="manageBtn" title="Códigos"><span class="fi-d">⚙️</span><svg class="fi-m" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg><span class="fl">Códigos</span></button>
       <button class="filter-btn success" id="refreshBtn" title="Actualizar">⟳</button>
     </div>
   </aside>
@@ -80,16 +89,14 @@
                 <option value="24">24 Horas</option>
 				<option value="48">48 Horas</option>
             </select>
+            <div class="hour-chips" id="hourChips"><button type="button" data-h="2">2 h</button><button type="button" data-h="4">4 h</button><button type="button" data-h="8">8 h</button><button type="button" data-h="12">12 h</button><button type="button" data-h="24">24 h</button><button type="button" data-h="48">48 h</button></div>
             <button class="btn" id="updateChartBtn">Actualizar Gráfico</button>
-			<button class="btn" 
-                style="background: #4CAF50; margin-left: auto; margin-right: 10px; font-size: 0.9rem; padding: 8px 15px;" 
-                onclick="downloadHistoryCSV(currentHistoryCode)">⬇️ Descargar CSV</button>
         </div>
         <div class="time-filter range-filter">
-            <label for="rangeStart">Desde:</label>
-            <input type="datetime-local" id="rangeStart">
-            <label for="rangeEnd">Hasta:</label>
-            <input type="datetime-local" id="rangeEnd">
+            <div class="fld"><label for="rangeStart">Desde:</label>
+            <input type="datetime-local" id="rangeStart"></div>
+            <div class="fld"><label for="rangeEnd">Hasta:</label>
+            <input type="datetime-local" id="rangeEnd"></div>
             <button class="btn" id="applyRangeBtn">Ver rango</button>
             <span id="rangeMessage" class="range-message"></span>
         </div>
@@ -102,6 +109,7 @@
       </div>
 
       <div class="modal-footer">
+        <button class="btn" id="csvBtn" style="flex: 1; border-color:#4CAF50; color:#4CAF50;" onclick="downloadHistoryCSV(currentHistoryCode)">⬇️ Descargar CSV</button>
         <button class="btn" id="closeHistoryModalFooter" style="flex: 1;">Cerrar</button>
       </div>
     </div>
