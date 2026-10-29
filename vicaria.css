@@ -1589,3 +1589,56 @@ input:checked + .slider:before {
   padding: 8px 14px; border-radius: 20px; white-space: nowrap;
   background: rgba(0, 0, 0, 0.7); color: #E8F1F5; font-size: 13px;
 }
+
+
+/* =========================================================
+   TARJETA: iconos a la izquierda del sparkline + campana
+   ========================================================= */
+
+/* Pie de tarjeta: [iconos] [sparkline] en la misma fila */
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;   /* sin sparkline, los iconos quedan a la derecha */
+  gap: 8px;
+  width: 100%;
+  margin-top: 0;
+}
+.card-footer:has(.card-actions, .sparkline-container) { margin-top: 8px; }
+.card-footer .sparkline-container { flex: 1; width: auto; min-width: 0; margin-top: 0; }
+
+.card-actions {
+  position: static; bottom: auto; right: auto;
+  display: flex; gap: 6px; flex-shrink: 0;
+}
+.card-actions .history-btn { width: 28px; height: 28px; font-size: 14px; position: static; }
+
+@media (min-width: 769px) {
+
+  /* Aún más chicos cuando hay muchas tarjetas */
+  .cards-grid[data-count="10"] .card-actions .history-btn,
+  .cards-grid[data-count="11"] .card-actions .history-btn,
+  .cards-grid[data-count="12"] .card-actions .history-btn,
+  .cards-grid[data-count="13"] .card-actions .history-btn,
+  .cards-grid[data-count="14"] .card-actions .history-btn,
+  .cards-grid[data-count="15"] .card-actions .history-btn,
+  .cards-grid[data-count="16"] .card-actions .history-btn,
+  .cards-grid[data-count="17"] .card-actions .history-btn,
+  .cards-grid[data-count="18"] .card-actions .history-btn,
+  .cards-grid[data-count="19"] .card-actions .history-btn,
+  .cards-grid[data-count="20"] .card-actions .history-btn { width: 24px; height: 24px; font-size: 12px; }
+
+  /* Campana / ajuste: más chicos y sin pisar el nombre */
+  .alarm-indicator { top: 10px; right: 10px; width: 32px; height: 32px; font-size: 16px; }
+  .adjust-indicator { top: 10px; left: 10px; min-width: 30px; height: 30px; font-size: 15px; }
+  .card-main:has(.alarm-indicator.enabled) .card-header,
+  .card-main:has(.adjust-indicator) .card-header { padding: 0 44px; }
+}
+
+@media (max-width: 768px) {
+  /* En móvil el pie se dispersa en la grilla de la tarjeta (según mockup) */
+  .card-footer, .card-footer:has(.card-actions, .sparkline-container) { display: contents; margin: 0; }
+  .card-actions { gap: 8px; }
+  .card-actions .history-btn { width: 44px; height: 44px; font-size: 0; }
+  .card-footer .sparkline-container { flex: none; width: 120px; }
+}

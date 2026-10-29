@@ -3031,34 +3031,6 @@ function createCard(code) {
       </div>
 
 
-      ${
-        hasSheetHistory(code)
-
-          ? `
-            <div class="card-actions">
-              <button
-                type="button"
-                class="history-btn"
-                title="Ver gráfico"
-                aria-label="Ver gráfico"
-                onclick="openHistoryModal('${code}', event, 'chart')">
-                <span class="hb-emoji">📈</span>
-                <svg class="hb-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 15c3-7 5-7 8 0s5 7 8 0"/><circle cx="18.4" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>
-              </button>
-              <button
-                type="button"
-                class="history-btn"
-                title="Ver tabla"
-                aria-label="Ver tabla"
-                onclick="openHistoryModal('${code}', event, 'table')">
-                <span class="hb-emoji">📋</span>
-                <svg class="hb-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg>
-              </button>
-            </div>
-          `
-
-          : ''
-      }
 
 
       <div class="card-header">
@@ -3165,7 +3137,37 @@ function createCard(code) {
       </div>
 
 
-      ${sparklineHTML}
+      <div class="card-footer">
+      ${
+        hasSheetHistory(code)
+
+          ? `
+            <div class="card-actions">
+              <button
+                type="button"
+                class="history-btn"
+                title="Ver gráfico"
+                aria-label="Ver gráfico"
+                onclick="openHistoryModal('${code}', event, 'chart')">
+                <span class="hb-emoji">📈</span>
+                <svg class="hb-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 15c3-7 5-7 8 0s5 7 8 0"/><circle cx="18.4" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>
+              </button>
+              <button
+                type="button"
+                class="history-btn"
+                title="Ver tabla"
+                aria-label="Ver tabla"
+                onclick="openHistoryModal('${code}', event, 'table')">
+                <span class="hb-emoji">📋</span>
+                <svg class="hb-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg>
+              </button>
+            </div>
+          `
+
+          : ''
+      }
+        ${sparklineHTML}
+      </div>
 
     </div>
 
