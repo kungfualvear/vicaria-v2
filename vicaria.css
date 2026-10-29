@@ -1555,3 +1555,37 @@ input:checked + .slider:before {
   #historyModal.view-chart .chart-container { height: min(55dvh, 420px); }
   #historyModal.view-chart .modal-footer { display: none; }
 }
+
+
+/* =========================================================
+   GRÁFICO EN PANTALLA COMPLETA
+   ========================================================= */
+.chart-container { cursor: zoom-in; }
+
+.chart-fs-hint {
+  position: absolute; top: 8px; right: 10px;
+  font-size: 12px; color: #8FA6B2; pointer-events: none;
+}
+.chart-fs-close, .chart-fs-rotate { display: none; }
+
+#historyModal .chart-container.fs {
+  position: fixed; inset: 0; z-index: 30000;
+  width: 100vw !important; height: 100dvh !important;
+  margin: 0; padding: 12px; border: 0; border-radius: 0;
+  background: #0B1620; cursor: default;
+}
+.chart-container.fs .chart-fs-hint { display: none; }
+.chart-container.fs .chart-fs-close {
+  display: flex; align-items: center; justify-content: center;
+  position: absolute; z-index: 2;
+  top: calc(8px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right));
+  width: 44px; height: 44px; border-radius: 12px; padding: 0;
+  background: rgba(0, 0, 0, 0.6); color: #3CC8E8; font-size: 20px;
+  border: 1px solid rgba(0, 212, 255, 0.4);
+}
+.chart-container.fs.needs-rotate .chart-fs-rotate {
+  display: block; position: absolute; z-index: 2;
+  left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  padding: 8px 14px; border-radius: 20px; white-space: nowrap;
+  background: rgba(0, 0, 0, 0.7); color: #E8F1F5; font-size: 13px;
+}
