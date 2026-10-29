@@ -5704,6 +5704,132 @@ if (
 }
 
 
+// ------------------------------------------------------------
+// GRÁFICO EN PANTALLA COMPLETA
+// ------------------------------------------------------------
+// Al tocar el gráfico se abre en pantalla completa. Donde el navegador lo
+// permite (Android/Chrome) se bloquea además la orientación en horizontal.
+// En iPhone no existe ese bloqueo: se muestra un aviso para girar el teléfono
+// y el gráfico se adapta solo al hacerlo.
+
+const chartBox = document.getElementById('chartBox');
+const chartFsClose = document.getElementById('chartFsClose');
+let chartFsActive = false;
+
+function resizeChartSoon() {
+
+  setTimeout(() => {
+    if (currentChart) {
+      currentChart.resize();
+    }
+  }, 200);
+}
+
+function updateRotateHint() {
+
+  if (!chartBox) {
+    return;
+  }
+
+  const portrait = window.matchMedia('(orientation: portrait)').matches;
+
+  chartBox.classList.toggle(
+    'needs-rotate',
+    chartFsActive && portrait && chartBox.dataset.lockFailed === '1'
+  );
+}
+
+async function openChartFullscreen() {
+
+  if (chartFsActive || !chartBox || !currentChart) {
+    return;
+  }
+
+  chartFsActive = true;
+
+  chartBox.classList.add('fs');
+  chartBox.dataset.lockFailed = '1';
+
+  try {
+    if (chartBox.requestFullscreen) {
+      await chartBox.requestFullscreen({ navigationUI: 'hide' });
+    } else if (chartBox.webkitRequestFullscreen) {
+      chartBox.webkitRequestFullscreen();
+    }
+  } catch (error) {
+    // Sin pantalla completa nativa: queda el modo "overlay" por CSS.
+  }
+
+  try {
+    if (screen.orientation && screen.orientation.lock) {
+      await screen.orientation.lock('landscape');
+      chartBox.dataset.lockFailed = '0';
+    }
+  } catch (error) {
+    // Bloqueo no disponible (iPhone, escritorio): se pide girar a mano.
+  }
+
+  updateRotateHint();
+  resizeChartSoon();
+}
+
+function closeChartFullscreen() {
+
+  if (!chartFsActive) {
+    return;
+  }
+
+  chartFsActive = false;
+
+  chartBox.classList.remove('fs', 'needs-rotate');
+
+  try {
+    if (screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock();
+    }
+  } catch (error) {}
+
+  const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+
+  if (fsEl) {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    try {
+      const result = exit.call(document);
+      if (result && result.catch) {
+        result.catch(() => {});
+      }
+    } catch (error) {}
+  }
+
+  resizeChartSoon();
+}
+
+if (historyChartCanvas) {
+  historyChartCanvas.addEventListener('click', openChartFullscreen);
+}
+
+if (chartFsClose) {
+  chartFsClose.addEventListener('click', closeChartFullscreen);
+}
+
+// Salir con el gesto "atrás" / Esc del sistema.
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && chartFsActive) {
+    closeChartFullscreen();
+  }
+});
+
+document.addEventListener('webkitfullscreenchange', () => {
+  if (!document.webkitFullscreenElement && chartFsActive) {
+    closeChartFullscreen();
+  }
+});
+
+window.addEventListener('resize', () => {
+  updateRotateHint();
+  resizeChartSoon();
+});
+
 if (hourChips) {
   hourChips.addEventListener('click', event => {
 
@@ -5787,6 +5913,8 @@ if (
 // ============================================================
 
 function closeHistory() {
+
+  closeChartFullscreen();
 
   // Descarta respuestas pendientes y los datos leídos de la hoja.
   historyRequestId++;
