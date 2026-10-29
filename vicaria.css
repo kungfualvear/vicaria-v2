@@ -1742,3 +1742,65 @@ input:checked + .slider:before {
 @media (prefers-reduced-motion: reduce) {
   .card-flip { transition: none; }
 }
+
+
+/* =========================================================
+   VENTANA DE GRÁFICO / TABLA DELANTE DE LA TARJETA
+   ========================================================= */
+.card-actions {
+  display: none; position: absolute; inset: 0; z-index: 20;
+  align-items: center; justify-content: center; gap: 28px; padding: 12px;
+  background: rgba(6, 14, 20, 0.95); border-radius: 16px;
+}
+.card-main.show-actions .card-actions { display: flex; animation: cardActionsIn 0.18s ease-out; }
+@keyframes cardActionsIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+
+.cards-grid .card-main .card-actions .history-btn {
+  position: static; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  width: auto; height: auto; min-width: 84px; min-height: 72px; padding: 8px 10px;
+  background: none; border: 0; border-radius: 12px; box-shadow: none;
+  color: #3CC8E8; font-size: 30px;
+}
+.cards-grid .card-main .card-actions .history-btn:hover {
+  background: rgba(0, 212, 255, 0.12); border: 0; box-shadow: none; transform: none;
+}
+.hb-label { display: block; font: 600 13px 'IBM Plex Sans', sans-serif; color: #E8F1F5; }
+.card-actions-close {
+  position: absolute; top: 6px; right: 6px; width: 36px; height: 36px; padding: 0;
+  border: 0; border-radius: 10px; background: none; color: #8FA6B2; font-size: 18px;
+}
+
+/* =========================================================
+   TIPO DE ALARMA (dentro de "Gestionar Códigos")
+   ========================================================= */
+.alarm-mode {
+  display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; margin-bottom: 14px;
+  padding: 12px; border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+}
+.alarm-mode-title { font-weight: 600; font-size: 14px; color: var(--disco-blue, #00d4ff); }
+.alarm-mode-opt { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; padding: 6px 4px; cursor: pointer; }
+.alarm-mode-opt input { flex-shrink: 0; width: 20px; height: 20px; margin-top: 3px; accent-color: #00d4ff; }
+.alarm-mode-opt b { display: block; font-size: 15px; }
+.alarm-mode-opt small { display: block; font-size: 12px; opacity: 0.75; }
+.alarm-mode-test { align-self: flex-start; padding: 8px 16px; }
+
+@media (max-width: 768px) {
+
+  /* Frente: la diferencia (solo el valor) a la derecha del valor principal */
+  .card-front { grid-template-areas: "head head" "value diff" "spark spark"; }
+  .diff-info {
+    grid-area: diff; justify-self: end; text-align: right;
+    font: 600 20px 'IBM Plex Mono', monospace; color: #E8F1F5;
+  }
+
+  /* La ventana de gráfico/tabla cubre la cara frontal de la tarjeta */
+  .card-actions { grid-area: auto; align-self: auto; justify-self: auto; border-radius: 14px; }
+  .hb-label { font-size: 14px; }
+
+  /* Con alarma por voz, el interruptor de alarma vuelve a estar disponible en móvil */
+  .switch-container.alarm-toggle { display: flex; }
+
+  .alarm-mode { background: #12242F; border-color: #28404E; }
+  .alarm-mode-title { font-family: 'IBM Plex Sans', sans-serif; color: #E8F1F5; }
+}

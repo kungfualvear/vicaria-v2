@@ -168,6 +168,9 @@ try {
 }
 
 let alarmStates = {};
+
+// Última variación (valor - asignado) y unidad de cada tarjeta, para el mensaje de voz.
+const alarmInfo = {};
 let thresholdCounters = {};
 let currentFilter = 'favorites';
 let updateIntervalId = null;
@@ -711,10 +714,9 @@ function beep() {
   try {
 
     const audio =
-      new Audio('alarma.mp3');
+      getAlarmAudio();
 
-    audio.volume =
-      0.8;
+    audio.currentTime = 0;
 
     isAlarmPlaying =
       true;
@@ -757,6 +759,183 @@ function beep() {
   }
 }
 
+
+// ============================================================
+// TIPO DE ALARMA: Individual (voz) / General (sonido)
+// ============================================================
+
+const ALARM_MODE_KEY = 'vicaria_alarm_mode';
+
+function getAlarmMode() {
+
+  try {
+    return localStorage.getItem(ALARM_MODE_KEY) === 'individual'
+      ? 'individual'
+      : 'general';
+  } catch (error) {
+    return 'general';
+  }
+}
+
+function setAlarmMode(mode) {
+
+  try {
+    localStorage.setItem(ALARM_MODE_KEY, mode);
+  } catch (error) {}
+}
+
+let alarmAudio = null;
+
+function getAlarmAudio() {
+
+  if (!alarmAudio) {
+    alarmAudio = new Audio('alarma.mp3');
+    alarmAudio.volume = 0.8;
+  }
+
+  return alarmAudio;
+}
+
+// Los navegadores móviles exigen un toque previo para permitir sonido y voz.
+let mediaUnlocked = false;
+
+function unlockMedia() {
+
+  if (mediaUnlocked) {
+    return;
+  }
+
+  mediaUnlocked = true;
+
+  try {
+    const a = getAlarmAudio();
+    a.muted = true;
+    const p = a.play();
+    if (p && p.then) {
+      p.then(() => {
+        a.pause();
+        a.currentTime = 0;
+        a.muted = false;
+      }).catch(() => {
+        a.muted = false;
+      });
+    }
+  } catch (error) {}
+
+  try {
+    if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      speechSynthesis.speak(u);
+    }
+  } catch (error) {}
+}
+
+['pointerdown', 'touchend', 'click', 'keydown'].forEach(
+  name => document.addEventListener(
+    name,
+    unlockMedia,
+    { once: true, passive: true }
+  )
+);
+
+function pickSpanishVoice() {
+
+  if (!('speechSynthesis' in window)) {
+    return null;
+  }
+
+  const voices = speechSynthesis.getVoices() || [];
+
+  const lang = v => (v.lang || '').toLowerCase().replace('_', '-');
+
+  return (
+    voices.find(v => lang(v) === 'es-ar') ||
+    voices.find(v => lang(v) === 'es-419') ||
+    voices.find(v => lang(v) === 'es-mx') ||
+    voices.find(v => lang(v) === 'es-us') ||
+    voices.find(v => lang(v).startsWith('es')) ||
+    null
+  );
+}
+
+function spokenUnit(unit) {
+
+  if (unit === 'l/s') return 'litros por segundo';
+  if (unit === 'cm') return 'centímetros';
+  if (unit === 'm³/s') return 'metros cúbicos por segundo';
+
+  return unit || '';
+}
+
+function buildAlarmMessage(code, type) {
+
+  const info = alarmInfo[code];
+
+  const codeInfo =
+    allCodes.find(c => normalizeCode(c.code) === code);
+
+  const settings = getCodeSettings(code);
+
+  const name = settings.customName || codeInfo?.name || code;
+
+  const word = type === 'up' ? 'un aumento' : 'una merma';
+
+  if (!info || !Number.isFinite(info.variation)) {
+    return `Se ha detectado ${word} en ${name}`;
+  }
+
+  const amount = Math.round(Math.abs(info.variation));
+
+  return `Se ha detectado ${word} de ${amount} ${spokenUnit(info.unit)} en ${name}`;
+}
+
+function speakAlarm(code, type, textOverride) {
+
+  if (!('speechSynthesis' in window)) {
+    beep();
+    return false;
+  }
+
+  try {
+
+    const u = new SpeechSynthesisUtterance(
+      textOverride || buildAlarmMessage(code, type)
+    );
+
+    const voice = pickSpanishVoice();
+
+    if (voice) {
+      u.voice = voice;
+      u.lang = voice.lang;
+    } else {
+      u.lang = 'es-AR';
+    }
+
+    u.rate = 0.95;
+    u.volume = 1;
+
+    speechSynthesis.speak(u);
+
+    return true;
+
+  } catch (error) {
+
+    beep();
+
+    return false;
+  }
+}
+
+// Alarma Individual = voz · Alarma General = sonido
+function playAlarmSound(code, type) {
+
+  if (getAlarmMode() === 'individual') {
+    speakAlarm(code, type);
+  } else {
+    beep();
+  }
+}
 
 function playBeepSequence() {
   beep();
@@ -936,7 +1115,7 @@ function startAlarm(
 
 
   if (!document.hidden) {
-    playBeepSequence();
+    playAlarmSound(code, type);
   }
 
 
@@ -972,7 +1151,7 @@ function startAlarm(
 
 
         if (!document.hidden) {
-          playBeepSequence();
+          playAlarmSound(code, type);
         }
 
 
@@ -2702,6 +2881,8 @@ function createCard(code) {
     displayValue -
     assignedValue;
 
+  alarmInfo[code] = { variation, unit: mainUnit };
+
 
   let statusClass =
     'status-normal';
@@ -3155,10 +3336,7 @@ function createCard(code) {
       </div>
 
 
-      <div class="diff-info">
-        <span class="diff-label">Dif. con asignado</span>
-        <b>${variationText}</b>
-      </div>
+      <div class="diff-info">${variationText}</div>
       <div class="last-update">
 
         ${averageDisplay}
@@ -3172,7 +3350,7 @@ function createCard(code) {
         hasSheetHistory(code)
 
           ? `
-            <div class="card-actions">
+            <div class="card-actions" role="dialog" aria-label="Ver historial">
               <button
                 type="button"
                 class="history-btn"
@@ -3180,7 +3358,8 @@ function createCard(code) {
                 aria-label="Ver gráfico"
                 onclick="openHistoryModal('${code}', event, 'chart')">
                 <span class="hb-emoji">📈</span>
-                <svg class="hb-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 15c3-7 5-7 8 0s5 7 8 0"/><circle cx="18.4" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>
+                <svg class="hb-svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 15c3-7 5-7 8 0s5 7 8 0"/><circle cx="18.4" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>
+                <span class="hb-label">Gráfico</span>
               </button>
               <button
                 type="button"
@@ -3189,8 +3368,10 @@ function createCard(code) {
                 aria-label="Ver tabla"
                 onclick="openHistoryModal('${code}', event, 'table')">
                 <span class="hb-emoji">📋</span>
-                <svg class="hb-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg>
+                <svg class="hb-svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg>
+                <span class="hb-label">Tabla</span>
               </button>
+              <button type="button" class="card-actions-close" aria-label="Cerrar">✕</button>
             </div>
           `
 
@@ -3805,6 +3986,28 @@ function updateCounters() {
 // EXPANDIR / CONTRAER TARJETA
 // ============================================================
 
+function closeCardActions(code) {
+
+  code =
+    normalizeCode(
+      code
+    );
+
+  cardUi.actions.delete(code);
+
+  const card =
+    document.querySelector(
+      `[data-code="${CSS.escape(code)}"]`
+    );
+
+  const main =
+    card && card.querySelector('.card-main');
+
+  if (main) {
+    main.classList.remove('show-actions');
+  }
+}
+
 window.cardTap =
 function(
   code,
@@ -3828,8 +4031,13 @@ function(
   const main = card.querySelector('.card-main');
   const target = event.target;
 
-  // Los iconos tienen su propio manejador.
-  if (target.closest('.history-btn')) {
+  // Ventana de gráfico/tabla: los botones tienen su manejador; tocar el fondo la cierra.
+  if (target.closest('.card-actions')) {
+
+    if (!target.closest('.history-btn')) {
+      closeCardActions(code);
+    }
+
     return;
   }
 
@@ -3849,6 +4057,8 @@ function(
     const rect = main.getBoundingClientRect();
 
     if (event.clientX - rect.left < rect.width / 2) {
+
+      closeCardActions(code);
 
       const flipped = main.classList.toggle('flipped');
 
@@ -4708,6 +4918,8 @@ function(
     codeInfo?.name ||
     code;
 
+
+  closeCardActions(code);
 
   historyView =
     view === 'table'
@@ -5944,6 +6156,42 @@ window.addEventListener('resize', () => {
   updateRotateHint();
   resizeChartSoon();
 });
+
+// Tipo de alarma (dentro de "Gestionar Códigos")
+document.querySelectorAll('input[name="alarmMode"]').forEach(radio => {
+
+  radio.checked = radio.value === getAlarmMode();
+
+  radio.addEventListener('change', () => {
+    if (radio.checked) {
+      setAlarmMode(radio.value);
+    }
+  });
+});
+
+const testAlarmBtn = document.getElementById('testAlarmBtn');
+
+if (testAlarmBtn) {
+  testAlarmBtn.addEventListener('click', () => {
+
+    unlockMedia();
+
+    if (getAlarmMode() === 'individual') {
+      speakAlarm(
+        '',
+        'up',
+        'Se ha detectado un aumento de 1500 litros por segundo en Obra de Toma'
+      );
+    } else {
+      beep();
+    }
+  });
+}
+
+// Algunos navegadores cargan las voces de forma diferida.
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = () => {};
+}
 
 if (hourChips) {
   hourChips.addEventListener('click', event => {

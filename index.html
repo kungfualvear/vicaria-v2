@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ViCaRiA - Vigía de Caudales del Río Atuel</title>
-  <link rel="stylesheet" href="vicaria.css?v=9.0.2">
+  <link rel="stylesheet" href="vicaria.css?v=9.0.3">
   <meta name="theme-color" content="#0B1620">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -64,6 +64,18 @@
       </div>
       
       <div class="modal-body">
+        <div class="alarm-mode">
+          <div class="alarm-mode-title">🔔 Tipo de alarma</div>
+          <label class="alarm-mode-opt">
+            <input type="radio" name="alarmMode" value="individual">
+            <span><b>Alarma Individual</b><small>Por voz: "Se ha detectado un aumento de … en …"</small></span>
+          </label>
+          <label class="alarm-mode-opt">
+            <input type="radio" name="alarmMode" value="general">
+            <span><b>Alarma General</b><small>Con sonido de alarma</small></span>
+          </label>
+          <button type="button" class="btn alarm-mode-test" id="testAlarmBtn">▶ Probar</button>
+        </div>
         <input type="text" id="modalSearch" class="modal-search" placeholder="🔍 Buscar código o nombre...">
         <div class="code-list" id="codeList"></div>
       </div>
@@ -146,8 +158,8 @@
           </div>
       </div>
   </div>
-  <script src="vicaria-sheet.js?v=9.0.2"></script>
-  <script src="vicaria.js?v=9.0.2"></script>
+  <script src="vicaria-sheet.js?v=9.0.3"></script>
+  <script src="vicaria.js?v=9.0.3"></script>
   
   <script>
   if ('serviceWorker' in navigator) {
