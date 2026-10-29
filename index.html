@@ -5,7 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ViCaRiA - Vigía de Caudales del Río Atuel</title>
   <link rel="stylesheet" href="vicaria.css">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#0B1620">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ViCaRiA">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 </head>
 <body>
@@ -143,13 +150,13 @@
   <script src="vicaria.js"></script>
   
   <script>
-  /*
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(() => console.log('SW registered'))
-      .catch(e => console.error('SW reg fail', e));
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('SW registrado'))
+        .catch(e => console.error('Fallo al registrar el SW', e));
+    });
   }
-  */
 </script>
 
 <div id="modalManual" class="modal-bg">
