@@ -8,7 +8,7 @@
 //
 // Todas las rutas son relativas: funciona igual en la raíz del dominio o en una subcarpeta.
 
-const CACHE_VERSION = 'v9.0.0'; // Cambiar en cada publicación
+const CACHE_VERSION = 'v9.0.1'; // Cambiar en cada publicación
 const PRECACHE = `vicaria-precache-${CACHE_VERSION}`;
 const RUNTIME = `vicaria-runtime-${CACHE_VERSION}`;
 
@@ -72,7 +72,7 @@ async function networkFirst(request) {
     throw new Error('Respuesta no válida');
   } catch (err) {
     clearTimeout(timer);
-    const cached = await caches.match(request);
+    const cached = await caches.match(request, { ignoreSearch: true });
     if (cached) return cached;
     if (request.mode === 'navigate') {
       const fallback = await caches.match('./index.html');

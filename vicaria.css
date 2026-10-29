@@ -1626,7 +1626,7 @@ input:checked + .slider:before {
   .cards-grid[data-count="17"] .card-actions .history-btn,
   .cards-grid[data-count="18"] .card-actions .history-btn,
   .cards-grid[data-count="19"] .card-actions .history-btn,
-  .cards-grid[data-count="20"] .card-actions .history-btn { width: 24px; height: 24px; font-size: 12px; }
+  .cards-grid[data-count="20"] .card-actions .history-btn { width: 20px; height: 20px; font-size: 14px; }
 
   /* Campana / ajuste: más chicos y sin pisar el nombre */
   .alarm-indicator { top: 10px; right: 10px; width: 32px; height: 32px; font-size: 16px; }
@@ -1641,4 +1641,23 @@ input:checked + .slider:before {
   .card-actions { gap: 8px; }
   .card-actions .history-btn { width: 44px; height: 44px; font-size: 0; }
   .card-footer .sparkline-container { flex: none; width: 120px; }
+}
+
+
+/* =========================================================
+   ICONOS GRÁFICO/TABLA: sin círculo de fondo y más juntos
+   ========================================================= */
+.card-actions { gap: 2px; }
+.card-actions .history-btn {
+  width: 24px; height: 24px; font-size: 17px;
+  background: none; border: 0; border-radius: 6px; box-shadow: none;
+}
+.card-actions .history-btn:hover {
+  background: none; border: 0; box-shadow: none; transform: scale(1.18);
+}
+
+@media (max-width: 768px) {
+  /* Zona táctil cómoda (40×44), pero sin fondo y casi pegados */
+  .card-actions { gap: 0; }
+  .card-actions .history-btn { width: 40px; height: 44px; font-size: 0; }
 }
