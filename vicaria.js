@@ -177,6 +177,12 @@ let currentHistoryCode = null;
 // Vista del historial: 'chart' (gráfico) o 'table' (tabla)
 let historyView = 'chart';
 
+// Estado visual de las tarjetas: sobrevive a los refrescos automáticos.
+const cardUi = {
+  flipped: new Set(),   // tarjetas dadas vuelta (móvil)
+  actions: new Set()    // tarjetas con los iconos de gráfico/tabla visibles
+};
+
 // Control de audio
 let isAlarmPlaying = false;
 
@@ -3001,6 +3007,24 @@ function createCard(code) {
   // CREAR ELEMENTO
   // ----------------------------------------------------------
 
+  const fmtInt = v => Math.round(v).toLocaleString('es-AR');
+
+  const secondaryText =
+    secondaryValue !== null
+      ? `${fmtInt(secondaryValue)} ${secondaryUnit}`
+      : '-';
+
+  const assignedText = `${fmtInt(assignedValue)} ${mainUnit}`;
+
+  const variationText =
+    `${variation >= 0 ? '+' : ''}${fmtInt(variation)} ${mainUnit}`;
+
+  const secondaryLabelText =
+    secondaryUnit === 'cm' ? 'Altura' : 'Caudal';
+
+  const statusText =
+    { 'status-high': 'Alto', 'status-low': 'Bajo', 'status-outdated': 'Desactualizado' }[statusClass] || 'Normal';
+
   const card =
     document.createElement(
       'div'
@@ -3018,8 +3042,10 @@ function createCard(code) {
   card.innerHTML = `
 
     <div
-      class="card-main ${statusClass}"
-      onclick="toggleExpand('${code}', 'main')">
+      class="card-main ${statusClass} ${cardUi.flipped.has(code) ? 'flipped' : ''} ${cardUi.actions.has(code) ? 'show-actions' : ''}"
+      onclick="cardTap('${code}', event)">
+      <div class="card-flip">
+      <div class="card-face card-front">
 
       ${adjustmentBadge}
 
@@ -3129,6 +3155,10 @@ function createCard(code) {
       </div>
 
 
+      <div class="diff-info">
+        <span class="diff-label">Dif. con asignado</span>
+        <b>${variationText}</b>
+      </div>
       <div class="last-update">
 
         ${averageDisplay}
@@ -3168,6 +3198,24 @@ function createCard(code) {
       }
         ${sparklineHTML}
       </div>
+    </div>
+    <div class="card-face card-back">
+      <div class="card-header">
+        <div class="card-code">
+          ${displayName}
+        </div>
+        <span class="status-badge badge-${statusClass.replace('status-', '')}">
+          ${statusText}
+        </span>
+      </div>
+      <dl class="back-data">
+        <div><dt>${secondaryLabelText}</dt><dd>${secondaryText}</dd></div>
+        <div><dt>Asignado</dt><dd>${assignedText}</dd></div>
+        <div><dt>Promedio horario</dt><dd>${formattedAverage} ${mainUnit}</dd></div>
+        <div><dt>Actualizado</dt><dd>${formattedDate}</dd></div>
+      </dl>
+    </div>
+    </div>
 
     </div>
 
@@ -3362,7 +3410,7 @@ function createCard(code) {
         </div>
 
 
-        <div class="radio-group">
+        <div class="radio-group cycles-group">
 
           <label>
 
@@ -3756,6 +3804,62 @@ function updateCounters() {
 // ============================================================
 // EXPANDIR / CONTRAER TARJETA
 // ============================================================
+
+window.cardTap =
+function(
+  code,
+  event
+) {
+
+  code =
+    normalizeCode(
+      code
+    );
+
+  const card =
+    document.querySelector(
+      `[data-code="${CSS.escape(code)}"]`
+    );
+
+  if (!card || !event) {
+    return;
+  }
+
+  const main = card.querySelector('.card-main');
+  const target = event.target;
+
+  // Los iconos tienen su propio manejador.
+  if (target.closest('.history-btn')) {
+    return;
+  }
+
+  // Valor principal: muestra / oculta los iconos de gráfico y tabla.
+  if (target.closest('.main-value')) {
+
+    const visible = main.classList.toggle('show-actions');
+
+    cardUi.actions[visible ? 'add' : 'delete'](code);
+
+    return;
+  }
+
+  // Móvil: tocar el lado izquierdo da vuelta la tarjeta.
+  if (window.matchMedia('(max-width: 768px)').matches) {
+
+    const rect = main.getBoundingClientRect();
+
+    if (event.clientX - rect.left < rect.width / 2) {
+
+      const flipped = main.classList.toggle('flipped');
+
+      cardUi.flipped[flipped ? 'add' : 'delete'](code);
+
+      return;
+    }
+  }
+
+  toggleExpand(code, 'main');
+};
 
 window.toggleExpand =
 function(
@@ -5204,9 +5308,18 @@ async function(
           plugins: {
 
             legend: {
-
               position:
-                'top'
+                'top',
+              labels: {
+                usePointStyle:
+                  true,
+                pointStyle:
+                  'line',
+                boxWidth:
+                  36,
+                boxHeight:
+                  2
+              }
             },
 
 

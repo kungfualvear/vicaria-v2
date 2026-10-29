@@ -1661,3 +1661,84 @@ input:checked + .slider:before {
   .card-actions { gap: 0; }
   .card-actions .history-btn { width: 40px; height: 44px; font-size: 0; }
 }
+
+
+/* =========================================================
+   ICONOS AL TOCAR EL VALOR · FLIP DE TARJETAS (MÓVIL)
+   ========================================================= */
+
+/* Escritorio: las caras no existen como tal (todo sigue igual que antes) */
+.card-flip, .card-front { display: contents; }
+.card-back, .diff-info { display: none; }
+
+/* Iconos de gráfico/tabla: aparecen al tocar el valor principal */
+.main-value { cursor: pointer; }
+.card-actions { display: none; }
+.card-main.show-actions .card-actions { display: flex; }
+
+@media (max-width: 768px) {
+
+  /* El fondo y el borde pasan a cada cara, para que gire la tarjeta completa */
+  .card-main,
+  .card-main.status-normal, .card-main.status-high,
+  .card-main.status-low, .card-main.status-outdated {
+    display: block; position: relative; overflow: visible;
+    padding: 0; background: none; border: 0; border-radius: 0;
+    box-shadow: none; animation: none; perspective: 1100px;
+  }
+
+  .card-flip {
+    display: grid; position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  }
+  .card-main.flipped .card-flip { transform: rotateY(180deg); }
+
+  .card-face {
+    grid-area: 1 / 1; position: relative;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    padding: 12px 14px; background: #12242F;
+    border: 1px solid #28404E; border-radius: 14px;
+  }
+  .card-main.status-high .card-face { border-color: #E8A33D; }
+  .card-main.status-low .card-face { border-color: #3CC8E8; }
+  .card-main.status-outdated .card-face { border-color: #5C6B75; }
+
+  /* FRENTE: título, valor principal, sparkline debajo y diferencia con el asignado */
+  .card-front {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "head head" "value value" "spark spark" "diff act";
+    align-items: center; row-gap: 8px; column-gap: 10px;
+  }
+  .secondary-info, .last-update { display: none; }
+  .sparkline-container, .card-footer .sparkline-container {
+    grid-area: spark; flex: none; width: 100%; height: 34px; margin: 0;
+  }
+  .diff-info {
+    display: block; grid-area: diff; min-width: 0;
+    font: 500 13px 'IBM Plex Mono', monospace; color: #8FA6B2;
+  }
+  .diff-info b { color: #E8F1F5; font-weight: 600; margin-left: 4px; }
+
+  /* REVERSO: título y demás datos */
+  .card-back {
+    display: flex; flex-direction: column; gap: 10px;
+    transform: rotateY(180deg);
+  }
+  .back-data { display: grid; gap: 10px; margin: 0; }
+  .back-data > div {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 12px; padding-bottom: 8px; border-bottom: 1px solid #28404E;
+  }
+  .back-data > div:last-child { border-bottom: 0; padding-bottom: 0; }
+  .back-data dt { font: 500 13px 'IBM Plex Sans', sans-serif; color: #8FA6B2; }
+  .back-data dd { margin: 0; font: 600 16px 'IBM Plex Mono', monospace; color: #E8F1F5; text-align: right; }
+
+  /* "1 ciclo / 3 ciclos" solo sirven para la alarma sonora */
+  .cycles-group { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-flip { transition: none; }
+}
