@@ -174,6 +174,9 @@ let updateIntervalId = null;
 let currentChart = null;
 let currentHistoryCode = null;
 
+// Vista del historial: 'chart' (gráfico) o 'table' (tabla)
+let historyView = 'chart';
+
 // Control de audio
 let isAlarmPlaying = false;
 
@@ -3032,15 +3035,26 @@ function createCard(code) {
         hasSheetHistory(code)
 
           ? `
-            <button
-              type="button"
-              class="history-btn"
-              title="Ver historial"
-              aria-label="Ver historial"
-              onclick="openHistoryModal('${code}', event)">
-              <span class="hb-emoji">📈</span>
-              <svg class="hb-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 15c3-7 5-7 8 0s5 7 8 0"/><circle cx="18.4" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>
-            </button>
+            <div class="card-actions">
+              <button
+                type="button"
+                class="history-btn"
+                title="Ver gráfico"
+                aria-label="Ver gráfico"
+                onclick="openHistoryModal('${code}', event, 'chart')">
+                <span class="hb-emoji">📈</span>
+                <svg class="hb-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 15c3-7 5-7 8 0s5 7 8 0"/><circle cx="18.4" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>
+              </button>
+              <button
+                type="button"
+                class="history-btn"
+                title="Ver tabla"
+                aria-label="Ver tabla"
+                onclick="openHistoryModal('${code}', event, 'table')">
+                <span class="hb-emoji">📋</span>
+                <svg class="hb-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg>
+              </button>
+            </div>
           `
 
           : ''
@@ -3443,14 +3457,20 @@ function createCard(code) {
           hasSheetHistory(code)
 
             ? `
-              <button
-                class="btn"
-                style="background:#3f51b5; width:100%;"
-                onclick="openHistoryModal('${code}')">
-
-                📈 Ver Historial
-
-              </button>
+              <div style="display:flex; gap:10px;">
+                <button
+                  class="btn"
+                  style="background:#3f51b5; flex:1;"
+                  onclick="openHistoryModal('${code}', undefined, 'chart')">
+                  📈 Gráfico
+                </button>
+                <button
+                  class="btn"
+                  style="background:#3f51b5; flex:1;"
+                  onclick="openHistoryModal('${code}', undefined, 'table')">
+                  📋 Tabla
+                </button>
+              </div>
             `
 
             : ''
@@ -4542,7 +4562,8 @@ function(
 window.openHistoryModal =
 function(
   code,
-  event
+  event,
+  view
 ) {
 
   if (event) {
@@ -4582,8 +4603,18 @@ function(
     code;
 
 
+  historyView =
+    view === 'table'
+      ? 'table'
+      : 'chart';
+
+  historyModal.classList.toggle('view-chart', historyView === 'chart');
+  historyModal.classList.toggle('view-table', historyView === 'table');
+
   historyModalTitle.textContent =
-    `📈 Historial de ${displayName} (${code})`;
+    historyView === 'table'
+      ? `📋 Tabla de ${displayName} (${code})`
+      : `📈 Gráfico de ${displayName} (${code})`;
 
 
   historyModal.classList.add(
@@ -5315,9 +5346,8 @@ function renderHistoryTable(
 
         <tbody>
     `;
-
-
-  data.forEach(
+  // Más actuales primero
+  data.slice().reverse().forEach(
     item => {
 
       const date =
