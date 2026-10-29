@@ -3684,11 +3684,19 @@ function createCard(code) {
               </label>
 
 
+              <button
+                type="button"
+                class="adjust-sign"
+                title="Cambiar signo (+ / −)"
+                aria-label="Cambiar signo"
+                onclick="toggleAdjustSign(this)">±</button>
               <input
-                type="number"
-                step="0.1"
+                type="text"
+                inputmode="decimal"
+                autocomplete="off"
                 value="${settings.adjustmentValue}"
-                onchange="updateSetting('${code}', 'adjustmentValue', this.value)"
+                oninput="this.value = this.value.replace(/[^0-9.,-]/g, '')"
+                onchange="updateSetting('${code}', 'adjustmentValue', this.value.replace(',', '.'))"
                 placeholder="+0.0"
                 style="flex:1; min-width:100px;">
 
@@ -4022,6 +4030,33 @@ function closeCardActions(code) {
     main.classList.remove('show-actions');
   }
 }
+
+// Cambia el signo del Ajuste (muchos teclados móviles no tienen la tecla "−").
+window.toggleAdjustSign =
+function(
+  btn
+) {
+
+  const input =
+    btn.parentElement.querySelector(
+      'input[inputmode="decimal"]'
+    );
+
+  if (!input) {
+    return;
+  }
+
+  const value = input.value.trim();
+
+  input.value =
+    value.startsWith('-')
+      ? value.slice(1)
+      : '-' + value;
+
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+
+  input.focus();
+};
 
 window.cardTap =
 function(

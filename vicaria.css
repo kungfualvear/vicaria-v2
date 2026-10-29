@@ -1870,3 +1870,23 @@ input:checked + .slider:before {
   .form-row[style*="align-items"] label { font-size: 12px; }
   .config-form .btn { min-height: clamp(34px, 5dvh, 44px); }
 }
+
+
+/* =========================================================
+   AJUSTE: botón ± para poder usar valores negativos
+   ========================================================= */
+.adjust-sign {
+  flex-shrink: 0; width: 34px; height: 36px; padding: 0;
+  border: 1px solid rgba(0, 212, 255, 0.4); border-radius: 8px;
+  background: rgba(0, 0, 0, 0.4); color: var(--disco-blue, #00d4ff);
+  font: 600 18px 'IBM Plex Sans', sans-serif; line-height: 1; cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .adjust-sign {
+    width: 36px; height: clamp(32px, 5.2dvh, 42px);
+    border-color: #28404E; background: #12242F; color: #3CC8E8; border-radius: 10px;
+  }
+  .form-row[style*="align-items"] input[type="text"] { min-width: 0 !important; }
+  .form-row[style*="align-items"] .form-group > div { gap: 6px !important; }
+}
