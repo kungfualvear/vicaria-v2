@@ -1804,3 +1804,69 @@ input:checked + .slider:before {
   .alarm-mode { background: #12242F; border-color: #28404E; }
   .alarm-mode-title { font-family: 'IBM Plex Sans', sans-serif; color: #E8F1F5; }
 }
+
+
+/* =========================================================
+   MÓVIL: tarjetas compactas, valores centrados, configuración sin scroll
+   ========================================================= */
+.alarm-note { display: none; }
+
+@media (max-width: 768px) {
+
+  /* ---- Tarjetas compactas: cada cara mide lo que mide su contenido ---- */
+  .cards-grid { gap: 8px; }
+  .card-main:not(.flipped) .card-back { position: absolute; inset: 0; overflow: hidden; }
+  .card-main.flipped .card-front { position: absolute; inset: 0; overflow: hidden; }
+
+  .card-face { padding: 8px 12px 10px; }
+  .card-front {
+    grid-template-columns: 1fr auto auto 1fr;
+    grid-template-areas: "head head head head" ". value diff ." "spark spark spark spark";
+    row-gap: 2px; column-gap: 14px; align-items: center;
+  }
+  .main-value { justify-self: center; }
+  .caudal-value { font-size: 28px; line-height: 1.1; }
+  .diff-info { justify-self: start; text-align: left; font-size: 18px; }
+  .sparkline-container, .card-footer .sparkline-container { height: 26px; }
+  .status-badge { padding: 2px 8px; font-size: 11px; }
+  .alarm-indicator { top: 6px; }
+  .adjust-indicator { top: 6px; }
+
+  /* Reverso compacto: cuadrícula de 2 × 2 */
+  .card-back { gap: 6px; }
+  .back-data { grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+  .back-data > div { flex-direction: column; align-items: flex-start; gap: 0; padding: 0; border: 0; }
+  .back-data dt { font-size: 11px; }
+  .back-data dd { font-size: 14px; text-align: left; }
+  .back-data > div:last-child dd { font-size: 13px; white-space: nowrap; }
+
+  /* ---- Configuración: entra en la altura de la pantalla, sin scroll ---- */
+  .card-config .config-form {
+    max-height: calc(100dvh - 12px); overflow-y: auto;   /* solo como red de seguridad */
+    gap: clamp(4px, 1.1dvh, 10px);
+    padding: 8px 14px calc(10px + env(safe-area-inset-bottom));
+  }
+  .config-title { font-size: 16px; }
+  .form-group { gap: 2px; }
+  .form-group label { font-size: 11px; }
+  .form-group input[type="text"],
+  .form-group input[type="number"] { height: clamp(32px, 5.2dvh, 42px); }
+  .switch-container { min-height: clamp(30px, 4.6dvh, 40px); padding: 0; }
+  .switch-container label:first-child { font-size: 14px; }
+  .radio-group label { min-height: clamp(32px, 5dvh, 40px); }
+  .config-form .btn { min-height: clamp(38px, 5.6dvh, 46px); }
+  .config-history { display: none !important; }   /* se accede desde la tarjeta */
+
+  /* Ciclos disponibles en móvil + aviso breve */
+  .cycles-group { display: flex; }
+  .alarm-note { display: block; margin-top: -2px; font-size: 11px; line-height: 1.3; color: #8FA6B2; }
+}
+
+
+@media (max-width: 768px) {
+  /* Orden + Ajuste en una sola fila (ocupaba el doble de alto) */
+  .form-row[style*="align-items"] { grid-template-columns: 0.75fr 1.25fr; }
+  .form-row[style*="align-items"] input[type="number"] { min-width: 0 !important; }
+  .form-row[style*="align-items"] label { font-size: 12px; }
+  .config-form .btn { min-height: clamp(34px, 5dvh, 44px); }
+}

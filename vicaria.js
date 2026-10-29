@@ -181,6 +181,20 @@ let currentHistoryCode = null;
 let historyView = 'chart';
 
 // Estado visual de las tarjetas: sobrevive a los refrescos automáticos.
+// Mientras la configuración de una tarjeta está abierta no se redibujan las tarjetas
+// (sino el botón "Cerrar" se reemplazaría justo al tocarlo y haría falta tocar dos veces).
+let renderPending = false;
+
+function requestRender() {
+
+  if (cardsGrid.querySelector('.card.expanded')) {
+    renderPending = true;
+    return;
+  }
+
+  renderCards();
+}
+
 const cardUi = {
   flipped: new Set(),   // tarjetas dadas vuelta (móvil)
   actions: new Set()    // tarjetas con los iconos de gráfico/tabla visibles
@@ -3401,7 +3415,7 @@ function createCard(code) {
     </div>
 
 
-    <div class="card-config">
+    <div class="card-config" onclick="if (event.target === this) toggleExpand('${code}', 'close')">
 
       <div class="config-form">
 
@@ -3625,6 +3639,7 @@ function createCard(code) {
           </label>
 
         </div>
+        <div class="alarm-note">🔔 La alarma sonora solo se oirá con la pantalla de la app activa.</div>
 
 
         <div
@@ -3688,7 +3703,7 @@ function createCard(code) {
           hasSheetHistory(code)
 
             ? `
-              <div style="display:flex; gap:10px;">
+              <div class="config-history" style="display:flex; gap:10px;">
                 <button
                   class="btn"
                   style="background:#3f51b5; flex:1;"
@@ -4112,6 +4127,12 @@ function(
   card.classList.toggle(
     'expanded'
   );
+
+  // Al cerrar: se aplican de una vez los cambios pendientes.
+  if (!card.classList.contains('expanded') && renderPending) {
+    renderPending = false;
+    renderCards();
+  }
 };
 
 
@@ -4147,7 +4168,7 @@ function(
   );
 
 
-  renderCards();
+  requestRender();
 };
 
 
@@ -4204,7 +4225,7 @@ function(
 
   renderCodeList();
 
-  renderCards();
+  requestRender();
 };
 
 
@@ -4444,7 +4465,7 @@ function(
   );
 
 
-  renderCards();
+  requestRender();
 };
 
 
@@ -4537,7 +4558,7 @@ function(
   );
 
 
-  renderCards();
+  requestRender();
 };
 
 
