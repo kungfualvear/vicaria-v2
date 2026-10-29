@@ -53,6 +53,9 @@ const rangeStartInput = document.getElementById('rangeStart');
 const rangeEndInput = document.getElementById('rangeEnd');
 const applyRangeBtn = document.getElementById('applyRangeBtn');
 const rangeMessage = document.getElementById('rangeMessage');
+const hourChips = document.getElementById('hourChips');
+const refreshBtnTop = document.getElementById('refreshBtnTop');
+const lastUpdatedEl = document.getElementById('lastUpdated');
 const historyTableContainer = document.getElementById('historyTableContainer');
 const chartLoading = document.getElementById('chartLoading');
 
@@ -1566,6 +1569,7 @@ async function loadAllCodes() {
 
     updateCounters();
 
+    setLastUpdated();
 
   } catch (error) {
 
@@ -3034,7 +3038,8 @@ function createCard(code) {
               title="Ver historial"
               aria-label="Ver historial"
               onclick="openHistoryModal('${code}', event)">
-              📈
+              <span class="hb-emoji">📈</span>
+              <svg class="hb-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 15c3-7 5-7 8 0s5 7 8 0"/><circle cx="18.4" cy="15" r="1.3" fill="currentColor" stroke="none"/></svg>
             </button>
           `
 
@@ -3047,6 +3052,10 @@ function createCard(code) {
         <div class="card-code">
           ${displayName}
         </div>
+
+        <span class="status-badge badge-${statusClass.replace('status-', '')}">
+          ${ { 'status-high': 'Alto', 'status-low': 'Bajo', 'status-outdated': 'Desactualizado' }[statusClass] || 'Normal' }
+        </span>
 
       </div>
 
@@ -4635,6 +4644,8 @@ function resetCustomRange() {
   if (rangeEndInput) rangeEndInput.value = '';
 
   setRangeMessage('');
+
+  syncHourChips();
 }
 
 // Texto para el nombre del CSV: "4h" o "20261001-0800_a_20261003-2000".
@@ -4661,6 +4672,34 @@ function historyLabelOptions() {
   return withDate
     ? { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }
     : { hour: '2-digit', minute: '2-digit', day: '2-digit' };
+}
+
+function syncHourChips() {
+
+  if (!hourChips) {
+    return;
+  }
+
+  hourChips.querySelectorAll('button').forEach(
+    b => b.classList.toggle(
+      'on',
+      !customHistoryRange && b.dataset.h === timeRangeSelect.value
+    )
+  );
+}
+
+function setLastUpdated() {
+
+  if (!lastUpdatedEl) {
+    return;
+  }
+
+  lastUpdatedEl.textContent =
+    'Actualizado ' +
+    new Date().toLocaleTimeString(
+      'es-AR',
+      { hour: '2-digit', minute: '2-digit' }
+    );
 }
 
 function applyCustomRange() {
@@ -4701,6 +4740,8 @@ function applyCustomRange() {
   }
 
   customHistoryRange = { start: startMs, end: endMs };
+
+  syncHourChips();
 
   setRangeMessage('');
 
@@ -5632,6 +5673,29 @@ if (
   );
 }
 
+
+if (hourChips) {
+  hourChips.addEventListener('click', event => {
+
+    const btn = event.target.closest('button[data-h]');
+
+    if (!btn) {
+      return;
+    }
+
+    timeRangeSelect.value = btn.dataset.h;
+
+    timeRangeSelect.dispatchEvent(new Event('change'));
+  });
+}
+
+if (refreshBtnTop) {
+  refreshBtnTop.addEventListener('click', () => {
+    if (refreshBtn) {
+      refreshBtn.click();
+    }
+  });
+}
 
 if (applyRangeBtn) {
   applyRangeBtn.addEventListener('click', applyCustomRange);
