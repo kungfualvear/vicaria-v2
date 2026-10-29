@@ -1512,3 +1512,46 @@ input:checked + .slider:before {
 
   .loading, .empty-state { font-family: 'IBM Plex Sans', sans-serif; letter-spacing: 0; }
 }
+
+
+/* =========================================================
+   HISTORIAL: gráfico y tabla por separado + iconos en tarjeta
+   ========================================================= */
+
+/* Iconos de gráfico/tabla: abajo a la derecha de la tarjeta */
+.card-actions {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  display: flex;
+  gap: 8px;
+  z-index: 12;
+}
+.card-actions .history-btn { position: static; }
+
+/* Cada vista muestra solo lo suyo */
+#historyModal.view-chart #historyTableContainer { display: none; }
+#historyModal.view-table .chart-container { display: none; }
+#historyModal.view-chart #csvBtn { display: none; }
+#historyModal.view-table .history-table-container { max-height: 60vh; }
+
+@media (max-width: 768px) {
+
+  .card-main {
+    grid-template-areas: "head head" "value spark" "meta act" "upd act";
+  }
+  .card-actions {
+    position: static; grid-area: act; align-self: end; justify-self: end;
+  }
+  .card-actions .history-btn { grid-area: auto; }
+
+  /* Indicadores de alarma / ajuste: arriba a la derecha */
+  .alarm-indicator { top: 10px; bottom: auto; right: 14px; }
+  .adjust-indicator { top: 10px; bottom: auto; left: auto; right: 48px; }
+  .card-main:has(.adjust-indicator) .card-header { padding-right: 36px; }
+  .card-main:has(.alarm-indicator.enabled) .card-header { padding-right: 36px; }
+  .card-main:has(.adjust-indicator):has(.alarm-indicator.enabled) .card-header { padding-right: 72px; }
+
+  #historyModal.view-chart .chart-container { height: min(55dvh, 420px); }
+  #historyModal.view-chart .modal-footer { display: none; }
+}
