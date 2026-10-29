@@ -100,8 +100,11 @@
             <button class="btn" id="applyRangeBtn">Ver rango</button>
             <span id="rangeMessage" class="range-message"></span>
         </div>
-        <div class="chart-container">
+        <div class="chart-container" id="chartBox">
             <canvas id="historyChart"></canvas>
+            <span class="chart-fs-hint" aria-hidden="true">⤢ Tocá para ampliar</span>
+            <button type="button" class="chart-fs-close" id="chartFsClose" aria-label="Salir de pantalla completa">✕</button>
+            <div class="chart-fs-rotate" id="chartFsRotate">↻ Girá el teléfono para verlo en horizontal</div>
             <div id="chartLoading" class="loading" style="display:none; color:#333;">Cargando gráfico...</div>
         </div>
         <div id="historyTableContainer" class="history-table-container">
