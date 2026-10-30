@@ -1931,10 +1931,7 @@ input:checked + .slider:before {
 }
 .auth-link[hidden], .auth-form[hidden] { display: none; }
 
-.account-btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  cursor: pointer;
-}
+.account-btn { cursor: pointer; }
 .account-desk {
   position: absolute; top: 10px; right: 14px; z-index: 40;
   padding: 6px 12px; border-radius: 20px; font-size: 13px;
@@ -1965,4 +1962,65 @@ input:checked + .slider:before {
 }
 @media (min-width: 769px) {
   .topbar-actions { display: none; }
+}
+
+
+/* =========================================================
+   USUARIO EN EL SIDEBAR · PANEL DE ADMINISTRACIÓN
+   ========================================================= */
+.acc-admin { width: 100%; margin: 0 0 14px; }
+
+.adm-tabs { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; }
+.adm-tab {
+  min-height: 40px; padding: 0 16px; border-radius: 20px; cursor: pointer; white-space: nowrap;
+  border: 1px solid rgba(0, 212, 255, 0.3); background: rgba(0, 0, 0, 0.35);
+  color: inherit; font-size: 14px;
+}
+.adm-tab.on { background: var(--disco-blue, #00d4ff); border-color: var(--disco-blue, #00d4ff); color: #06202B; }
+
+.adm-pane { display: flex; flex-direction: column; gap: 6px; min-height: 200px; }
+.adm-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 8px; font-size: 14px; }
+.adm-small { min-height: 36px; padding: 6px 12px; font-size: 13px; }
+.adm-danger { border-color: #f44336 !important; color: #ff8a80 !important; }
+.adm-select {
+  height: 38px; padding: 0 8px; font-size: 14px; color: inherit;
+  border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 8px; background: rgba(0, 0, 0, 0.35);
+}
+.adm-row {
+  display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 6px 12px; align-items: start;
+  padding: 10px 0; border-bottom: 1px solid rgba(0, 212, 255, 0.15); font-size: 13px;
+}
+.adm-row small { display: block; font-size: 11px; opacity: 0.65; }
+.adm-user { grid-template-columns: 1.8fr 1fr 1.4fr; }
+.adm-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.adm-chip { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 10px; font-size: 11px; background: rgba(0, 212, 255, 0.15); }
+.adm-chip.adm-admin { background: rgba(255, 184, 107, 0.2); color: #FFB86B; }
+.adm-note { margin: 8px 0 0; font-size: 12px; opacity: 0.7; }
+.adm-bad { color: #ff8a80; opacity: 1; }
+.adm-ok { margin: 8px 0; padding: 10px; border: 1px solid #7EE0B4; border-radius: 8px; font-size: 13px; }
+.adm-ok pre { margin: 8px 0; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+.adm-new {
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; padding: 12px;
+  border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 10px;
+}
+.adm-new-title { font-size: 14px; font-weight: 600; }
+.adm-new input {
+  height: 42px; padding: 0 12px; font-size: 16px; color: inherit;
+  border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 8px; background: rgba(0, 0, 0, 0.35);
+}
+.adm-pw-row { display: flex; gap: 8px; }
+.adm-pw-row input { flex: 1; min-width: 0; }
+.adm-row code { padding: 1px 6px; border-radius: 4px; background: rgba(0, 0, 0, 0.35); }
+
+@media (max-width: 768px) {
+  .side-panel .account-btn { order: 5; }
+
+  .adm-tab { border-color: #28404E; background: #12242F; }
+  .adm-tab.on { background: #3CC8E8; border-color: #3CC8E8; }
+  .adm-select, .adm-new input { background: #0B1620; border-color: #28404E; }
+  .adm-new { border-color: #28404E; background: #12242F; }
+  .adm-row { grid-template-columns: 1fr 1fr; border-color: #28404E; }
+  .adm-main { grid-column: 1 / -1; }
+  .adm-user { grid-template-columns: 1fr; }
+  .adm-row code { background: #0B1620; }
 }

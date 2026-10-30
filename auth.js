@@ -11,7 +11,7 @@
 // - "Invitado": sin contraseña y sin sincronización.
 // ============================================================
 
-const APP_VERSION = '9.1.0';
+const APP_VERSION = '9.2.0';
 const FIREBASE_CDN = 'https://www.gstatic.com/firebasejs/12.9.0/';
 const EMAIL_DOMAIN = 'vicaria.app';
 const APP_SCRIPTS = ['vicaria-sheet.js', 'vicaria.js'];
@@ -38,6 +38,8 @@ let A = null;   // firebase-auth
 let F = null;   // firebase-firestore
 let auth = null;
 let db = null;
+let AppMod = null;
+let secAuth = null;   // segunda instancia de Auth, solo para crear usuarios
 
 const state = {
   role: 'guest',        // 'admin' | 'user' | 'guest'
@@ -90,6 +92,7 @@ const ERROR_TEXT = {
   'auth/requires-recent-login': 'Volvé a escribir tu contraseña actual.',
   'auth/admin-restricted-operation': 'El ingreso de invitado todavía no está habilitado.',
   'auth/operation-not-allowed': 'El ingreso de invitado todavía no está habilitado.',
+  'auth/email-already-in-use': 'Ese usuario ya existe en Authentication. Si fue eliminado del panel, borralo también desde la consola de Firebase.',
   'unavailable': 'Sin conexión con el servidor. Intentá de nuevo.',
   'permission-denied': 'Tu usuario no tiene permiso. Avisá al administrador.'
 };
@@ -156,6 +159,7 @@ async function loadFirebase() {
 
   const app = appMod.initializeApp(firebaseConfig);
 
+  AppMod = appMod;
   A = authMod;
   F = fsMod;
 
@@ -471,9 +475,17 @@ const ROLE_LABEL = { admin: 'Administrador', user: 'Usuario', guest: 'Invitado' 
 
 function updateAccountUI() {
 
-  document.querySelectorAll('.account-name').forEach(el => {
-    el.textContent = state.username;
+  const firstName = String(state.username).split(/\s+/)[0].slice(0, 9);
+
+  document.querySelectorAll('.account-btn').forEach(btn => {
+    btn.title = 'Mi cuenta · ' + state.username;
+    const label = btn.querySelector('.fl');
+    if (label) {
+      label.textContent = firstName || 'Cuenta';
+    }
   });
+
+  $('adminBtn').hidden = state.role !== 'admin';
 
   $('accName').textContent = state.username;
   $('accRole').textContent = ROLE_LABEL[state.role] || '';
@@ -508,6 +520,8 @@ async function logout() {
   const wasSync = state.sync;
 
   try {
+
+    await endSession();
 
     if (wasSync) {
       await flushPush();
@@ -554,6 +568,10 @@ async function startApp() {
   window.vicariaUser = state;
 
   updateAccountUI();
+
+  if (auth) {
+    startSession();
+  }
 
   if (state.sync) {
     installSyncHooks();
@@ -689,8 +707,13 @@ function bindUI() {
 
   $('changeLogout').addEventListener('click', logout);
 
+  // Esta escucha se registra antes que la de los filtros de la app: se corta acá
+  // para que abrir "Mi cuenta" no cambie el filtro de tarjetas.
   document.querySelectorAll('.account-btn').forEach(
-    btn => btn.addEventListener('click', openAccount)
+    btn => btn.addEventListener('click', event => {
+      event.stopImmediatePropagation();
+      openAccount();
+    })
   );
 
   $('closeAccount').addEventListener('click', closeAccount);
@@ -735,6 +758,584 @@ function bindUI() {
   });
 }
 
+
+// ============================================================
+// SESIONES (para el panel del administrador)
+// ============================================================
+// Cada ingreso crea un registro en "sessions" y lo renueva cada 2 minutos.
+// Conectado = sin cierre y con actividad en los últimos 3,5 minutos.
+
+const HEARTBEAT_MS = 2 * 60 * 1000;
+const ONLINE_WINDOW_MS = 3.5 * 60 * 1000;
+const SID_KEY = 'vicaria_sid';
+
+let sessionRef = null;
+
+function beat() {
+
+  if (!sessionRef) {
+    return;
+  }
+
+  F.updateDoc(sessionRef, { lastSeen: F.serverTimestamp() }).catch(() => {});
+}
+
+async function startSession() {
+
+  if (state.offline || !auth.currentUser) {
+    return;
+  }
+
+  try {
+
+    const sid = sessionStorage.getItem(SID_KEY) || crypto.randomUUID();
+
+    sessionStorage.setItem(SID_KEY, sid);
+
+    sessionRef = F.doc(db, 'sessions', sid);
+
+    let resumed = false;
+
+    try {
+      await F.updateDoc(sessionRef, { lastSeen: F.serverTimestamp(), end: null });
+      resumed = true;
+    } catch (error) {
+      // La sesión no existe todavía: se crea.
+    }
+
+    if (!resumed) {
+      await F.setDoc(sessionRef, {
+        uid: auth.currentUser.uid,
+        username: state.username,
+        role: state.role,
+        device: deviceLabel(),
+        start: F.serverTimestamp(),
+        lastSeen: F.serverTimestamp(),
+        end: null
+      });
+    }
+
+    setInterval(beat, HEARTBEAT_MS);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        beat();
+      }
+    });
+
+  } catch (error) {
+
+    sessionRef = null;
+
+    console.warn('ViCaRiA: no se pudo registrar la sesión', error);
+  }
+}
+
+async function endSession() {
+
+  const ref = sessionRef;
+
+  sessionStorage.removeItem(SID_KEY);
+  sessionRef = null;
+
+  if (!ref) {
+    return;
+  }
+
+  await Promise.race([
+    F.updateDoc(ref, { end: F.serverTimestamp(), lastSeen: F.serverTimestamp() }).catch(() => {}),
+    new Promise(resolve => setTimeout(resolve, 2500))
+  ]);
+}
+
+// ============================================================
+// PANEL DE ADMINISTRACIÓN
+// ============================================================
+
+const esc = value => String(value ?? '').replace(
+  /[&<>"']/g,
+  c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
+);
+
+const tsMs = value =>
+  value && typeof value.toMillis === 'function' ? value.toMillis() : null;
+
+function fmtDate(ms) {
+
+  if (ms == null) {
+    return '—';
+  }
+
+  return new Date(ms).toLocaleString(
+    'es-AR',
+    { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }
+  );
+}
+
+function fmtDur(ms) {
+
+  if (ms == null || ms < 0) {
+    return '—';
+  }
+
+  const minutes = Math.round(ms / 60000);
+
+  if (minutes < 1) {
+    return 'menos de 1 min';
+  }
+
+  const h = Math.floor(minutes / 60);
+
+  return h ? `${h} h ${minutes % 60} min` : `${minutes} min`;
+}
+
+function ago(ms) {
+
+  const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
+
+  if (s < 60) return `hace ${s} s`;
+
+  const m = Math.round(s / 60);
+
+  if (m < 60) return `hace ${m} min`;
+
+  return `hace ${Math.round(m / 60)} h`;
+}
+
+let adminTab = 'connected';
+let adminTimer = null;
+let historyCache = [];
+
+function stopAdminTimer() {
+  clearInterval(adminTimer);
+  adminTimer = null;
+}
+
+function setAdminTab(tab) {
+
+  adminTab = tab;
+
+  stopAdminTimer();
+
+  document.querySelectorAll('.adm-tab').forEach(
+    btn => btn.classList.toggle('on', btn.dataset.tab === tab)
+  );
+
+  const loader = { connected: loadConnected, history: loadHistory, users: loadUsers }[tab];
+
+  loader();
+
+  if (tab === 'connected') {
+    adminTimer = setInterval(loadConnected, 30000);
+  }
+}
+
+function openAdmin() {
+
+  closeAccount();
+
+  $('adminModal').classList.add('active');
+
+  setAdminTab('connected');
+}
+
+function closeAdmin() {
+
+  stopAdminTimer();
+
+  $('adminModal').classList.remove('active');
+}
+
+function adminError(error) {
+
+  $('admPane').innerHTML =
+    `<p class="adm-note adm-bad">${esc(errorText(error))}</p>`;
+}
+
+const roleChip = role =>
+  `<span class="adm-chip adm-${esc(role)}">${esc(ROLE_LABEL[role] || role)}</span>`;
+
+// ---------- Conectados ----------
+
+async function loadConnected() {
+
+  try {
+
+    const since = F.Timestamp.fromMillis(Date.now() - ONLINE_WINDOW_MS);
+
+    const snap = await F.getDocs(F.query(
+      F.collection(db, 'sessions'),
+      F.where('lastSeen', '>=', since),
+      F.orderBy('lastSeen', 'desc')
+    ));
+
+    const rows = snap.docs
+      .map(d => d.data())
+      .filter(r => !r.end);
+
+    if (adminTab !== 'connected') {
+      return;
+    }
+
+    $('admPane').innerHTML =
+      `<div class="adm-bar"><b>${rows.length}</b> conectado${rows.length === 1 ? '' : 's'} ahora
+         <button type="button" class="btn adm-small" data-act="refresh">↻ Actualizar</button></div>` +
+      (rows.length
+        ? rows.map(r => {
+            const start = tsMs(r.start);
+            const last = tsMs(r.lastSeen);
+            return `<div class="adm-row">
+              <div class="adm-main"><b>${esc(r.username)}</b> ${roleChip(r.role)}
+                <small>${esc(r.device)}</small></div>
+              <div><small>Ingresó</small>${esc(fmtDate(start))}</div>
+              <div><small>Conectado hace</small>${esc(fmtDur(last - start))}</div>
+              <div><small>Última actividad</small>${esc(last ? ago(last) : '—')}</div>
+            </div>`;
+          }).join('')
+        : '<p class="adm-note">Nadie conectado en este momento.</p>') +
+      '<p class="adm-note">Se actualiza solo cada 30 segundos.</p>';
+
+  } catch (error) {
+
+    adminError(error);
+  }
+}
+
+// ---------- Historial ----------
+
+function renderHistory(filter) {
+
+  const rows = historyCache.filter(r => !filter || r.username === filter);
+
+  const names = [...new Set(historyCache.map(r => r.username))].sort();
+
+  $('admPane').innerHTML =
+    `<div class="adm-bar">
+       <select id="admFilter" class="adm-select">
+         <option value="">Todos los usuarios</option>
+         ${names.map(n => `<option value="${esc(n)}" ${n === filter ? 'selected' : ''}>${esc(n)}</option>`).join('')}
+       </select>
+       <button type="button" class="btn adm-small" data-act="refresh">↻ Actualizar</button>
+       <button type="button" class="btn adm-small adm-danger" data-act="purge">Borrar más de 30 días</button>
+     </div>` +
+    (rows.length
+      ? rows.map(r => {
+          const start = tsMs(r.start);
+          const end = tsMs(r.end);
+          const last = tsMs(r.lastSeen);
+          const stop = end || last;
+          return `<div class="adm-row">
+            <div class="adm-main"><b>${esc(r.username)}</b> ${roleChip(r.role)}
+              <small>${esc(r.device)}</small></div>
+            <div><small>Inicio</small>${esc(fmtDate(start))}</div>
+            <div><small>${end ? 'Fin' : 'Última actividad'}</small>${esc(fmtDate(stop))}</div>
+            <div><small>Duración</small>${esc(fmtDur(stop - start))}</div>
+          </div>`;
+        }).join('')
+      : '<p class="adm-note">No hay sesiones registradas.</p>') +
+    '<p class="adm-note">Se muestran las últimas 100 sesiones. Si una sesión no tiene "Fin", se cerró la pestaña sin salir: la duración llega hasta la última actividad.</p>';
+
+  $('admFilter').onchange = event => renderHistory(event.target.value);
+}
+
+async function loadHistory() {
+
+  try {
+
+    const snap = await F.getDocs(F.query(
+      F.collection(db, 'sessions'),
+      F.orderBy('start', 'desc'),
+      F.limit(100)
+    ));
+
+    historyCache = snap.docs.map(d => d.data());
+
+    if (adminTab === 'history') {
+      renderHistory('');
+    }
+
+  } catch (error) {
+
+    adminError(error);
+  }
+}
+
+async function purgeHistory() {
+
+  if (!confirm('¿Borrar las sesiones con más de 30 días de antigüedad?')) {
+    return;
+  }
+
+  try {
+
+    const cutoff = F.Timestamp.fromMillis(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    let removed = 0;
+
+    for (let round = 0; round < 10; round++) {
+
+      const snap = await F.getDocs(F.query(
+        F.collection(db, 'sessions'),
+        F.where('lastSeen', '<', cutoff),
+        F.orderBy('lastSeen', 'asc'),
+        F.limit(400)
+      ));
+
+      if (snap.empty) {
+        break;
+      }
+
+      const batch = F.writeBatch(db);
+
+      snap.docs.forEach(d => batch.delete(d.ref));
+
+      await batch.commit();
+
+      removed += snap.docs.length;
+    }
+
+    await loadHistory();
+
+    showToast(`Se borraron ${removed} sesiones antiguas.`);
+
+    setTimeout(() => showToast(''), 4000);
+
+  } catch (error) {
+
+    adminError(error);
+  }
+}
+
+// ---------- Usuarios ----------
+
+function randomPassword() {
+
+  const alphabet = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+  const bytes = new Uint32Array(10);
+
+  crypto.getRandomValues(bytes);
+
+  return Array.from(bytes, n => alphabet[n % alphabet.length]).join('');
+}
+
+async function createUserAccount(displayName, tempPass, role) {
+
+  const username = displayName.trim().replace(/\s+/g, ' ');
+  const key = normalizeUser(username);
+
+  if (!key) {
+    throw new UserError('Escribí un nombre válido.');
+  }
+
+  if (tempPass.length < 8) {
+    throw new UserError('La contraseña provisoria debe tener al menos 8 caracteres.');
+  }
+
+  const dup = await F.getDocs(F.query(
+    F.collection(db, 'users'),
+    F.where('usernameLower', '==', key)
+  ));
+
+  if (!dup.empty) {
+    throw new UserError(`Ya existe un usuario "${key}".`);
+  }
+
+  // La cuenta se crea con una segunda instancia de Firebase para no cerrar
+  // la sesión del administrador.
+  if (!secAuth) {
+    const secApp =
+      AppMod.getApps().find(a => a.name === 'secondary') ||
+      AppMod.initializeApp(firebaseConfig, 'secondary');
+
+    secAuth = A.initializeAuth(secApp, { persistence: A.inMemoryPersistence });
+  }
+
+  const cred = await A.createUserWithEmailAndPassword(
+    secAuth,
+    `${key}@${EMAIL_DOMAIN}`,
+    tempPass
+  );
+
+  try {
+
+    await F.setDoc(F.doc(db, 'users', cred.user.uid), {
+      username,
+      usernameLower: key,
+      role: role === 'admin' ? 'admin' : 'user',
+      mustChangePassword: true,
+      disabled: false,
+      createdAt: F.serverTimestamp(),
+      createdBy: auth.currentUser.uid
+    });
+
+  } catch (error) {
+
+    throw new UserError('La cuenta se creó pero no se pudo guardar el perfil. Reintentá desde la consola de Firebase.');
+
+  } finally {
+
+    try { await A.signOut(secAuth); } catch (e) {}
+  }
+
+  return { username, key };
+}
+
+async function loadUsers(notice) {
+
+  try {
+
+    const snap = await F.getDocs(F.collection(db, 'users'));
+
+    const users = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => String(a.username).localeCompare(String(b.username), 'es'));
+
+    if (adminTab !== 'users') {
+      return;
+    }
+
+    const me = auth.currentUser.uid;
+
+    $('admPane').innerHTML =
+      `<form id="newUserForm" class="adm-new" autocomplete="off">
+         <div class="adm-new-title">Nuevo usuario</div>
+         <input id="nuName" type="text" placeholder="Nombre y apellido" autocapitalize="words">
+         <div class="adm-pw-row">
+           <input id="nuPass" type="text" placeholder="Contraseña provisoria (mín. 8)" autocapitalize="off" spellcheck="false">
+           <button type="button" class="btn adm-small" data-act="genpass">Generar</button>
+         </div>
+         <select id="nuRole" class="adm-select"><option value="user">Usuario</option><option value="admin">Administrador</option></select>
+         <div id="nuMsg" class="auth-msg" role="alert"></div>
+         <button type="submit" class="btn" id="nuBtn">Crear usuario</button>
+       </form>
+       ${notice || ''}
+       <div class="adm-bar"><b>${users.length}</b> usuario${users.length === 1 ? '' : 's'}</div>` +
+      users.map(u => `<div class="adm-row adm-user">
+         <div class="adm-main"><b>${esc(u.username)}</b> ${roleChip(u.role)}
+           <small>Ingresa con: <code>${esc(u.usernameLower)}</code></small></div>
+         <div><small>Estado</small>${u.disabled ? '<span class="adm-bad">Deshabilitado</span>' : u.mustChangePassword ? 'Debe cambiar la clave' : 'Activo'}</div>
+         <div class="adm-actions">${u.id === me ? '<small>(vos)</small>' : `
+           <button type="button" class="btn adm-small" data-act="toggle" data-id="${esc(u.id)}" data-disabled="${u.disabled ? '1' : '0'}">${u.disabled ? 'Habilitar' : 'Deshabilitar'}</button>
+           <button type="button" class="btn adm-small adm-danger" data-act="delete" data-id="${esc(u.id)}" data-name="${esc(u.username)}">Eliminar</button>`}
+         </div>
+       </div>`).join('');
+
+    $('newUserForm').onsubmit = async event => {
+
+      event.preventDefault();
+
+      const button = $('nuBtn');
+      const name = $('nuName').value;
+      const pass = $('nuPass').value;
+
+      busy(button, true);
+      setMsg('nuMsg', '');
+
+      try {
+
+        const created = await createUserAccount(name, pass, $('nuRole').value);
+
+        const text =
+          `ViCaRiA — https://kungfualvear.github.io/vicaria-v2/\nUsuario: ${created.key}\nContraseña provisoria: ${pass}\n(Se te pedirá cambiarla en el primer ingreso.)`;
+
+        await loadUsers(
+          `<div class="adm-ok">✔ Usuario creado.<pre>${esc(text)}</pre>
+             <button type="button" class="btn adm-small" data-act="copy" data-text="${esc(text)}">Copiar datos</button></div>`
+        );
+
+      } catch (error) {
+
+        setMsg('nuMsg', errorText(error));
+
+      } finally {
+
+        busy(button, false);
+      }
+    };
+
+  } catch (error) {
+
+    adminError(error);
+  }
+}
+
+// ---------- acciones del panel ----------
+
+async function adminAction(button) {
+
+  const act = button.dataset.act;
+
+  try {
+
+    if (act === 'refresh') {
+      return adminTab === 'history' ? loadHistory() : loadConnected();
+    }
+
+    if (act === 'purge') {
+      return purgeHistory();
+    }
+
+    if (act === 'genpass') {
+      $('nuPass').value = randomPassword();
+      return;
+    }
+
+    if (act === 'copy') {
+      await navigator.clipboard.writeText(button.dataset.text);
+      button.textContent = '✔ Copiado';
+      return;
+    }
+
+    if (act === 'toggle') {
+      await F.updateDoc(F.doc(db, 'users', button.dataset.id), {
+        disabled: button.dataset.disabled !== '1'
+      });
+      return loadUsers();
+    }
+
+    if (act === 'delete') {
+
+      if (!confirm(`¿Eliminar el perfil de ${button.dataset.name}? Va a perder el acceso. Para volver a crearlo con el mismo usuario, borrá también su cuenta en Authentication (consola de Firebase).`)) {
+        return;
+      }
+
+      await F.deleteDoc(F.doc(db, 'users', button.dataset.id));
+
+      return loadUsers();
+    }
+
+  } catch (error) {
+
+    adminError(error);
+  }
+}
+
+function bindAdmin() {
+
+  $('adminBtn').addEventListener('click', openAdmin);
+  $('closeAdmin').addEventListener('click', closeAdmin);
+
+  $('adminModal').addEventListener('click', event => {
+    if (event.target === $('adminModal')) {
+      closeAdmin();
+    }
+  });
+
+  document.querySelectorAll('.adm-tab').forEach(
+    btn => btn.addEventListener('click', () => setAdminTab(btn.dataset.tab))
+  );
+
+  $('admPane').addEventListener('click', event => {
+
+    const button = event.target.closest('button[data-act]');
+
+    if (button) {
+      adminAction(button);
+    }
+  });
+}
+
 // ---------- inicio ----------
 
 async function init() {
@@ -742,6 +1343,8 @@ async function init() {
   setScreen('splash');
 
   bindUI();
+
+  bindAdmin();
 
   try {
 
