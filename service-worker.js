@@ -8,7 +8,7 @@
 //
 // Todas las rutas son relativas: funciona igual en la raíz del dominio o en una subcarpeta.
 
-const CACHE_VERSION = 'v9.0.5'; // Cambiar en cada publicación
+const CACHE_VERSION = 'v9.1.0'; // Cambiar en cada publicación
 const PRECACHE = `vicaria-precache-${CACHE_VERSION}`;
 const RUNTIME = `vicaria-runtime-${CACHE_VERSION}`;
 
@@ -18,6 +18,7 @@ const PRECACHE_ASSETS = [
   './vicaria.css',
   './vicaria.js',
   './vicaria-sheet.js',
+  './auth.js',
   './manual.html',
   './manifest.json',
   './icons/icon-192.png',

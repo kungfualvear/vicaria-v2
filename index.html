@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ViCaRiA - Vigía de Caudales del Río Atuel</title>
-  <link rel="stylesheet" href="vicaria.css?v=9.0.5">
+  <link rel="stylesheet" href="vicaria.css?v=9.1.0">
   <meta name="theme-color" content="#0B1620">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -17,15 +17,19 @@
 </head>
 <body>
   <div class="header">
+    <button type="button" class="account-btn account-desk" aria-label="Mi cuenta">👤 <span class="account-name"></span></button>
     <h1></h1>
     <div class="topbar-m">
       <div>
         <div class="brand-m">ViCaRiA</div>
         <div class="upd-m" id="lastUpdated">Cargando…</div>
       </div>
+      <div class="topbar-actions">
+        <button type="button" class="ib-m account-btn" aria-label="Mi cuenta">👤</button>
       <button type="button" class="ib-m" id="refreshBtnTop" aria-label="Actualizar datos">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
       </button>
+      </div>
     </div>
   </div>
 
@@ -158,8 +162,82 @@
           </div>
       </div>
   </div>
-  <script src="vicaria-sheet.js?v=9.0.5"></script>
-  <script src="vicaria.js?v=9.0.5"></script>
+    <!-- Ingreso de usuarios -->
+  <div id="authScreen" class="auth-screen">
+
+    <div id="authSplash" class="auth-card auth-splash">
+      <img src="icons/icon-192.png" alt="" class="auth-logo">
+      <p class="auth-sub">Cargando…</p>
+    </div>
+
+    <div id="loginCard" class="auth-card" hidden>
+      <img src="icons/icon-192.png" alt="" class="auth-logo">
+      <h1 class="auth-title">ViCaRiA</h1>
+      <p class="auth-sub">Vigía de Caudales del Río Atuel</p>
+      <form id="loginForm" class="auth-form" autocomplete="on">
+        <label class="auth-field">Usuario
+          <input id="loginUser" type="text" autocomplete="username" autocapitalize="words" spellcheck="false" placeholder="Tu usuario">
+        </label>
+        <label class="auth-field">Contraseña
+          <input id="loginPass" type="password" autocomplete="current-password">
+        </label>
+        <div id="loginMsg" class="auth-msg" role="alert"></div>
+        <button type="submit" id="loginBtn" class="auth-btn">Ingresar</button>
+      </form>
+      <button type="button" id="guestBtn" class="auth-link">Entrar como invitado</button>
+      <button type="button" id="offlineBtn" class="auth-link" hidden>Continuar sin conexión</button>
+    </div>
+
+    <div id="changeCard" class="auth-card" hidden>
+      <img src="icons/icon-192.png" alt="" class="auth-logo">
+      <h1 class="auth-title">Elegí tu contraseña</h1>
+      <p class="auth-sub">Es tu primer ingreso: reemplazá la contraseña provisoria por una propia (mínimo 8 caracteres).</p>
+      <form id="changeForm" class="auth-form" autocomplete="off">
+        <label class="auth-field" id="curPassRow">Contraseña provisoria
+          <input id="changeCurPass" type="password" autocomplete="current-password">
+        </label>
+        <label class="auth-field">Nueva contraseña
+          <input id="changePass1" type="password" autocomplete="new-password">
+        </label>
+        <label class="auth-field">Repetir nueva contraseña
+          <input id="changePass2" type="password" autocomplete="new-password">
+        </label>
+        <div id="changeMsg" class="auth-msg" role="alert"></div>
+        <button type="submit" id="changeBtn" class="auth-btn">Guardar y continuar</button>
+      </form>
+      <button type="button" id="changeLogout" class="auth-link">Cancelar y salir</button>
+    </div>
+
+  </div>
+
+  <!-- Mi cuenta -->
+  <div class="modal" id="accountModal">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header">
+        <h2>👤 Mi cuenta</h2>
+        <button class="close-btn" id="closeAccount" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="acc-name" id="accName"></div>
+        <div class="acc-role" id="accRole"></div>
+        <div class="acc-sync" id="accSync"></div>
+        <form id="pwForm" class="acc-pw" autocomplete="off">
+          <div class="acc-pw-title">Cambiar contraseña</div>
+          <input id="pwCurrent" type="password" placeholder="Contraseña actual" autocomplete="current-password">
+          <input id="pwNew" type="password" placeholder="Nueva contraseña (mín. 8)" autocomplete="new-password">
+          <input id="pwNew2" type="password" placeholder="Repetir nueva contraseña" autocomplete="new-password">
+          <div id="pwMsg" class="auth-msg" role="alert"></div>
+          <button type="submit" id="pwBtn" class="btn">Cambiar contraseña</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="logoutBtn">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="syncToast" class="sync-toast" hidden role="status"></div>
+  <script type="module" src="auth.js?v=9.1.0"></script>
   
   <script>
   if ('serviceWorker' in navigator) {

@@ -1890,3 +1890,79 @@ input:checked + .slider:before {
   .form-row[style*="align-items"] input[type="text"] { min-width: 0 !important; }
   .form-row[style*="align-items"] .form-group > div { gap: 6px !important; }
 }
+
+
+/* =========================================================
+   INGRESO DE USUARIOS · MI CUENTA
+   ========================================================= */
+.auth-screen {
+  position: fixed; inset: 0; z-index: 100000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; overflow-y: auto;
+  background: #0B1620; color: #E8F1F5;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+.auth-screen[hidden] { display: none; }
+.auth-card {
+  width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 14px;
+  padding: 24px 22px; background: #12242F; border: 1px solid #28404E; border-radius: 16px;
+}
+.auth-card[hidden] { display: none; }
+.auth-logo { width: 72px; height: 72px; margin: 0 auto; }
+.auth-title { margin: 0; text-align: center; font-size: 24px; font-weight: 600; color: #E8F1F5; letter-spacing: 0; text-shadow: none; }
+.auth-sub { margin: 0; text-align: center; color: #8FA6B2; font-size: 13px; line-height: 1.4; }
+.auth-form { display: flex; flex-direction: column; gap: 12px; }
+.auth-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #8FA6B2; }
+.auth-field[hidden] { display: none; }
+.auth-field input {
+  height: 46px; padding: 0 12px; font-size: 16px; color: #E8F1F5;
+  background: #0B1620; border: 1px solid #28404E; border-radius: 10px;
+}
+.auth-field input:focus, .acc-pw input:focus { outline: 2px solid #3CC8E8; outline-offset: 1px; }
+.auth-msg { min-height: 18px; font-size: 13px; color: #FFB86B; }
+.auth-btn {
+  min-height: 48px; border: 0; border-radius: 12px; cursor: pointer;
+  background: #3CC8E8; color: #06202B; font: 600 15px 'IBM Plex Sans', sans-serif;
+}
+.auth-btn:disabled { opacity: 0.6; cursor: default; }
+.auth-link {
+  min-height: 44px; border: 1px solid #28404E; border-radius: 12px; cursor: pointer;
+  background: none; color: #E8F1F5; font: 500 14px 'IBM Plex Sans', sans-serif;
+}
+.auth-link[hidden], .auth-form[hidden] { display: none; }
+
+.account-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer;
+}
+.account-desk {
+  position: absolute; top: 10px; right: 14px; z-index: 40;
+  padding: 6px 12px; border-radius: 20px; font-size: 13px;
+  border: 1px solid rgba(0, 212, 255, 0.4); background: rgba(0, 0, 0, 0.5); color: #e0f7ff;
+}
+.topbar-actions { display: flex; gap: 8px; }
+
+.acc-name { font-size: 18px; font-weight: 600; }
+.acc-role { margin-top: 2px; font-size: 13px; color: var(--disco-blue, #00d4ff); }
+.acc-sync { margin: 8px 0 14px; font-size: 12px; opacity: 0.75; line-height: 1.4; }
+.acc-pw { display: flex; flex-direction: column; gap: 8px; }
+.acc-pw[hidden] { display: none; }
+.acc-pw-title { font-size: 13px; font-weight: 600; }
+.acc-pw input {
+  height: 42px; padding: 0 12px; font-size: 16px; color: inherit;
+  background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 8px;
+}
+.sync-toast {
+  position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); z-index: 99999;
+  max-width: 90vw; padding: 8px 14px; border-radius: 10px; font-size: 13px;
+  background: #4A2A12; color: #FFB86B; border: 1px solid #E8A33D;
+}
+.sync-toast[hidden] { display: none; }
+
+@media (max-width: 768px) {
+  .account-desk { display: none; }
+  .acc-pw input { background: #0B1620; border-color: #28404E; }
+}
+@media (min-width: 769px) {
+  .topbar-actions { display: none; }
+}
